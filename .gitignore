@@ -48,3 +48,7 @@ yarn-error.log*
 /.vercel/
 *.key
 *.p12
+# Nested Vercel application build state
+**/node_modules/
+**/.next/
+**/.vercel/

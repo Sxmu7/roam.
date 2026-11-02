@@ -16,13 +16,13 @@ Mobile Kamera-App für Reiseclips: aufnehmen, lokal behalten, in Gruppen teilen 
 - Ersteinrichtung in fünf Schritten; einmalige Anzeige pro Browser/Gerät und erneut aufrufbar in den Einstellungen.
 - PWA-Manifest und offline verfügbares App-Grundgerüst.
 
-## Aktueller Laufzeitstand
+## Bereitstellung
 
-Diese Quellversion verwendet **Vinext auf Cloudflare Workers**, **D1** für Gruppendaten und **R2** für gemeinsame Videos. Die bestehende Veröffentlichung läuft über Sites. Die Anmeldung wird dort von der Hosting-Plattform übernommen.
+`vercel-app/` ist eine eigenständige Next.js-App für Vercel. Im Vercel-Projekt die Root Directory auf `vercel-app`, Node.js auf 24 und Build auf `npm run build` setzen. Kamera, Dateien, Onboarding und Offline-Shell laufen dort direkt.
 
-**Der vollständige Vercel-Umzug ist noch nicht abgeschlossen.** Ein Vercel-Projekt und ein privater Blob-Store sind angelegt. Der aktuelle Cloudflare-Worker lässt sich nicht unverändert als Next.js-App auf Vercel deployen. Anmeldung, Datenbankzugriff und größere Video-Uploads müssen zuerst an die Vercel-Ressourcen angebunden werden. Eine erfolgreiche Oberfläche allein ist kein vollständiger Gruppen-Backend-Umzug.
+Gruppenreisen laufen weiterhin unter der bestehenden geschützten Sites-Adresse. Der Gruppen-Tab der Vercel-App verlinkt dorthin. Gemeinsame Originaldateien und Gruppen bleiben auf Cloudflare D1/R2 gespeichert. Eine direkte Backend-Verbindung aus Vercel ist noch nicht freigeschaltet; es wurden keine Backend-Geheimnisse auf Vercel übertragen.
 
-Die vorhandene Sites-Konfiguration bleibt erhalten, damit die bisherige App während der Migration funktioniert. Kein Datenverlust durch Überschreiben der aktuellen Online-Gruppendaten ist beabsichtigt.
+Lokale Clips gehören zur jeweiligen Domain. Vor einem Wechsel ein ROAM-ZIP exportieren und in der anderen App wieder importieren. Für Änderungen an gemeinsamen Assets beide `public/`-Verzeichnisse aktualisieren; die Vercel-Fassung von `groups-ui.js` enthält den Wechsel zur Gruppen-App.
 
 ## Lokal installieren und prüfen
 
