@@ -93,3 +93,82 @@ h1{font-size:40px;line-height:1.02;margin:10px 0 8px}
 @media(prefers-reduced-motion:reduce){.record.recording,.hero-reel i,#quickBanner i{animation:none!important}}
 #quickBanner{top:calc(132px + env(safe-area-inset-top))}
 .toast{top:calc(78px + env(safe-area-inset-top))!important;bottom:auto!important}
+/* ===== v3: countdown, sheets, notifications, polish ===== */
+.countdown-card{position:relative;overflow:hidden;border-radius:28px;padding:26px;margin:0 0 18px;background:linear-gradient(150deg,#211b08 0%,#141414 55%,#101010 100%);border:1px solid #2c250f;animation:clipEnter .5s cubic-bezier(.2,.8,.2,1)}
+.countdown-card:after{content:'';position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;background:radial-gradient(#FFC93C33,#FFC93C00 70%);animation:breathe 6s ease-in-out infinite}
+@keyframes breathe{50%{transform:scale(1.25);opacity:.6}}
+.countdown-card h2{font-size:34px;font-weight:800;letter-spacing:-.045em;margin:10px 0 4px}
+.countdown-card p{color:#a3a39d;margin:0 0 18px;font-size:14px}
+.cd-top{display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1}
+.code-chip{background:#0A0A0A;border:1px dashed #FFC93C80;color:#FFC93C;border-radius:999px;padding:7px 12px;font:700 12px Inter,system-ui;letter-spacing:.08em}
+.cd-digits{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0 0 18px;position:relative;z-index:1}
+.cd-cell{background:#0C0C0C;border:1px solid #242424;border-radius:18px;padding:14px 6px 10px;text-align:center}
+.cd-cell b{display:block;font-size:34px;font-weight:800;letter-spacing:-.04em;font-variant-numeric:tabular-nums;color:#F5F5F0}
+.cd-cell b.flip{animation:flip .45s cubic-bezier(.2,.9,.2,1)}
+@keyframes flip{0%{transform:translateY(-35%);opacity:0;filter:blur(3px)}100%{transform:none;opacity:1;filter:none}}
+.cd-cell small{display:block;margin-top:2px;color:#77776f;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em}
+.cd-actions{display:flex;gap:10px;flex-wrap:wrap;position:relative;z-index:1;align-items:center}
+.cd-actions .icon-button{background:#1c1c1c;border-radius:50%;width:46px;height:46px;color:#F5F5F0;font-size:20px}
+.cd-live{display:flex;gap:10px;align-items:center;background:#0C0C0C;border:1px solid #242424;border-radius:16px;padding:14px 16px;margin-bottom:18px;font-weight:600;font-size:14px}
+.cd-live i{width:10px;height:10px;border-radius:50%;background:var(--rec);animation:blink 1s infinite}
+.empty-cd{display:grid;gap:4px}
+.empty-cd h2{font-size:28px}
+.gp-actions{display:flex;gap:8px;flex-wrap:wrap}
+/* bottom sheets */
+dialog.sheet{position:fixed;inset:auto 0 0 0;margin:0 auto;width:min(560px,100%);max-height:88svh;overflow:auto;border:1px solid #232323;border-bottom:0;border-radius:30px 30px 0 0;background:#101010;color:#F5F5F0;padding:10px 22px calc(26px + env(safe-area-inset-bottom));animation:sheetUp .42s cubic-bezier(.2,.9,.2,1)}
+dialog.sheet.closing{animation:sheetDown .22s ease-in forwards}
+dialog.sheet::backdrop{background:#000000a8;backdrop-filter:blur(8px);animation:fadeIn .3s}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
+@keyframes sheetDown{to{transform:translateY(100%)}}
+@keyframes fadeIn{from{opacity:0}}
+.sheet-grip{width:44px;height:5px;border-radius:3px;background:#333;margin:4px auto 14px}
+.sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.sheet-head h2{font-size:26px;font-weight:800;letter-spacing:-.04em;margin:0}
+.sheet-sub{color:#a3a39d;font-size:14px;line-height:1.5;margin:0 0 16px}
+dialog.sheet label{display:block;font-size:12px;font-weight:600;color:#8f8f8a;margin:14px 0 6px}
+dialog.sheet input{width:100%;height:52px;padding:0 16px;font-size:16px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.two>div label{margin-top:0}
+.code-preview{display:flex;justify-content:space-between;align-items:center;background:#0A0A0A;border:1px dashed #FFC93C66;border-radius:16px;padding:14px 16px;margin:18px 0}
+.code-preview span{font-size:11px;letter-spacing:.14em;color:#8f8f8a;font-weight:700}.code-preview b{color:#FFC93C;letter-spacing:.06em}
+#ctSave,#jnGo{margin-top:6px}
+.big-code{display:flex;justify-content:center;flex-wrap:wrap;gap:4px;margin:10px 0 16px}
+.big-code span{display:grid;place-items:center;min-width:26px;height:44px;padding:0 4px;border-radius:10px;background:#1a1a1a;border:1px solid #2a2a2a;font:800 20px Inter,system-ui;color:#FFC93C;animation:popIn .4s cubic-bezier(.2,.9,.2,1.3) both}
+@keyframes popIn{from{transform:scale(.4) translateY(10px);opacity:0}}
+.share-link{background:#0A0A0A;border:1px solid #232323;border-radius:16px;padding:14px 16px;overflow:hidden}
+.share-link code{display:block;font-size:12px;color:#a3a39d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.code-input{text-align:center;letter-spacing:.12em;font-weight:800!important;text-transform:uppercase;font-size:20px!important}
+.shake{animation:shake .4s}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.trip-list{display:grid;gap:8px;margin-bottom:6px}
+.trip-row{display:flex;align-items:center;gap:12px;background:#151515;border:1px solid #222;border-radius:18px;padding:14px 16px}
+.trip-row span{flex:1}.trip-row b{display:block}.trip-row small{color:#8f8f8a}
+.text-button.danger{color:#FF6B60}
+/* notifications */
+.bell{position:relative}
+.bell[data-count]:not([data-count=""]):after{content:attr(data-count);position:absolute;top:2px;right:2px;min-width:17px;height:17px;border-radius:9px;background:var(--rec);color:#fff;font:700 10px/17px Inter,system-ui;text-align:center;padding:0 4px;animation:popIn .35s both}
+.note-list{display:grid;gap:8px}
+.note{display:flex;gap:12px;align-items:flex-start;background:#151515;border:1px solid #222;border-radius:18px;padding:14px;animation:clipEnter .35s both}
+.note.unread{border-color:#3a3112;background:#19160c}
+.note-ic{width:34px;height:34px;flex:none;border-radius:12px;background:#222;display:grid;place-items:center;color:#FFC93C}
+.note span:nth-child(2){flex:1}.note b{display:block;font-size:14px}.note small{color:#a3a39d;font-size:13px}
+.note time{color:#66665f;font-size:12px}
+.note-empty{text-align:center;padding:30px 10px;color:#8f8f8a}.note-empty span{color:#FFC93C;font-size:26px}.note-empty b{display:block;color:#F5F5F0;font-size:18px;margin:8px 0 4px}
+#notifAllow{margin-top:16px}
+#clipPop{position:fixed;left:50%;top:calc(70px + env(safe-area-inset-top));z-index:60;transform:translate(-50%,-140%);display:flex;gap:12px;align-items:center;min-width:260px;max-width:calc(100% - 28px);padding:12px 18px 12px 14px;border-radius:22px;background:#1a1a1aee;border:1px solid #2c2c2c;backdrop-filter:blur(18px);box-shadow:0 18px 50px rgba(0,0,0,.5);transition:transform .5s cubic-bezier(.2,.9,.2,1.15)}
+#clipPop.show{transform:translate(-50%,0)}
+#clipPop .cp-dot{width:30px;height:30px;flex:none;border-radius:10px;background:#FFC93C;box-shadow:inset 0 0 0 9px #FFC93C,inset 0 0 0 30px #FF3B30}
+#clipPop b{display:block;font-size:14px}#clipPop small{display:block;font-size:12.5px;color:#a3a39d}
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:70;overflow:hidden}
+.confetti i{position:absolute;top:-12px;width:8px;height:14px;border-radius:3px;animation:fall 1.6s cubic-bezier(.3,.6,.4,1) forwards}
+@keyframes fall{to{transform:translateY(105vh) rotate(540deg)}}
+/* polish */
+.journey-card,.backup-card,.clip{transition:transform .25s cubic-bezier(.2,.8,.2,1),border-color .25s}
+.journey-card:active,.clip:active{transform:scale(.985)}
+nav button svg{transition:transform .3s cubic-bezier(.2,.9,.2,1.3)}
+nav button.active svg{transform:translateY(-2px) scale(1.08)}
+.grid .clip{animation:clipEnter .45s both}
+.grid .clip:nth-child(2){animation-delay:.04s}.grid .clip:nth-child(3){animation-delay:.08s}.grid .clip:nth-child(4){animation-delay:.12s}
+@media(max-width:760px){.countdown-card{padding:22px;border-radius:26px}.countdown-card h2{font-size:30px}.cd-cell b{font-size:28px}.cd-actions .btn{flex:1}}
+@media(prefers-reduced-motion:reduce){.countdown-card:after,.cd-cell b.flip,.big-code span,.confetti{animation:none!important}}
+.cd-actions .btn{white-space:nowrap;padding:12px 16px}

@@ -100,7 +100,7 @@ def rebrand_html(h):
     h = replace_step(h, 4, INTRO4_HEAD)
     for a, b in [('<h2>Dein nächstes Kapitel.</h2>', '<h2>Wer filmt?</h2>'), ('<h2>Bereit zum Aufnehmen.</h2>', '<h2>Kamera bereit?</h2>'),
                  ('<h2>Gemeinsam unterwegs.</h2>', '<h2>Mit der Crew.</h2>'), ('placeholder="z. B. Brasilien 2027"', 'placeholder="z. B. Thailand ’26"'),
-                 ('<script src="onboarding.js"></script>', '<script src="onboarding.js"></script><script src="quick.js"></script>')]:
+                 ('<script src="onboarding.js"></script>', '<script src="onboarding.js"></script><script src="quick.js"></script><script src="trips.js"></script>')]:
         h = h.replace(a, b)
     R = [
         ('<a class="brand" href="./"><span class="brand-icon"><svg><use href="#i-camera"/></svg></span>roam</a>', '<a class="brand" href="./" aria-label="ClipIT!">' + WM + '</a>'),
@@ -135,9 +135,11 @@ def main():
     for f in ['app.js', 'groups-ui.js', 'onboarding.js']:
         (DST / f).write_text(rebrand_js((DST / f).read_text()))
     sw = (DST / 'sw.js').read_text()
-    sw = re.sub(r"const CACHE='[^']+'", "const CACHE='clipit-shell-v2'", sw)
+    sw = re.sub(r"const CACHE='[^']+'", "const CACHE='clipit-shell-v3'", sw)
     if "'./quick.js'" not in sw:
         sw = sw.replace("'./onboarding.js',", "'./onboarding.js','./quick.js',")
+    if "'./trips.js'" not in sw:
+        sw = sw.replace("'./quick.js',", "'./quick.js','./trips.js',")
     (DST / 'sw.js').write_text(sw)
     import json
     m = json.loads((DST / 'manifest.webmanifest').read_text())
