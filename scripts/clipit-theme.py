@@ -100,7 +100,7 @@ def rebrand_html(h):
     h = replace_step(h, 4, INTRO4_HEAD)
     for a, b in [('<h2>Dein nächstes Kapitel.</h2>', '<h2>Wer filmt?</h2>'), ('<h2>Bereit zum Aufnehmen.</h2>', '<h2>Kamera bereit?</h2>'),
                  ('<h2>Gemeinsam unterwegs.</h2>', '<h2>Mit der Crew.</h2>'), ('placeholder="z. B. Brasilien 2027"', 'placeholder="z. B. Thailand ’26"'),
-                 ('<script src="onboarding.js"></script>', '<script src="onboarding.js"></script><script src="quick.js"></script><script src="trips.js"></script>')]:
+                 ('<script src="onboarding.js"></script>', '<script src="onboarding.js"></script><script src="quick.js"></script><script src="trips.js"></script><script src="hl.js"></script>')]:
         h = h.replace(a, b)
     R = [
         ('<a class="brand" href="./"><span class="brand-icon"><svg><use href="#i-camera"/></svg></span>roam</a>', '<a class="brand" href="./" aria-label="ClipIT!">' + WM + '</a>'),
@@ -118,13 +118,47 @@ def rebrand_html(h):
     ]
     for a, b in R:
         h = h.replace(a, b)
+    h = one_app(h)
+    return h
+
+TRIPS_TAB = ('<button id="tripsTab" data-tab="trips"><svg viewBox="0 0 24 24"><path d="M3 17l7-4V6a2 2 0 0 1 4 0v7l7 4v2l-7-2v3l2 1.5V23l-4-1-4 1v-1.5L10 20v-3l-7 2z"/></svg>'
+             '<span>Reisen</span></button>')
+TRIPS_PAGE = ('<section id="tripsPage" class="page hidden"><div class="page-heading"><div><span class="overline">CLIPIT! REISEN</span>'
+              '<h1>Reisen</h1><p class="sub">Planen. Crew einladen. Zusammen filmen.</p></div></div><div id="tripHub"></div></section>')
+INTRO3 = ('<div class="intro-step hidden" data-step="3"><span class="intro-number">04 / 05</span><span class="intro-symbol">✈</span>'
+          '<h2>Mit der Crew.</h2><p>Unter „Reisen“ planst du den Trip und teilst Link oder Code. Wer beitritt, filmt direkt in dieselbe Reise.</p>'
+          '<div class="intro-howto"><div><b>1</b><span>Reise planen – der Countdown läuft</span></div><div><b>2</b><span>Link oder Code an die Crew schicken</span></div>'
+          '<div><b>3</b><span>Filmen, Highlights markieren, am Ende ein Film</span></div></div></div>')
+
+def one_app(h):
+    # Alte Gruppen-App raus – alles läuft über ClipIT!-Reisen
+    h = re.sub(r'<button id="groupsTab".*?</button>', TRIPS_TAB, h, flags=re.S)
+    h = re.sub(r'<section id="groupsPage".*?</section>', TRIPS_PAGE, h, flags=re.S)
+    h = re.sub(r'<dialog id="groupUploadDialog">.*?</dialog>', '', h, flags=re.S)
+    h = re.sub(r'<div class="intro-step hidden" data-step="3">.*?(?=<div class="intro-step hidden" data-step="4">)', INTRO3, h, flags=re.S)
+    h = h.replace('<script src="groups-ui.js"></script>', '<script src="geo.js"></script>')
+    h = h.replace(' Nur ausdrücklich in Gruppen geteilte Clips liegen zusätzlich online.', '')
+    h = h.replace('Kein Standortverlauf und kein automatisches Teilen mit Gruppen.', 'Kein Standortverlauf, nichts wird automatisch geteilt.')
     return h
 
 def rebrand_js(js):
     for a, b in [('ROAM-ZIP', 'ClipIT!-ZIP'), ('ROAM-App.', 'ClipIT!-App.'), ('ROAM-Export mit', 'ClipIT!-Export mit'),
                  ('ROAM-Originale-ZIP-Export', 'ClipIT!-Originale-ZIP-Export'), ('ROAM Export\\n', 'ClipIT! Export\\n')]:
         js = js.replace(a, b)
+    for a, b in (HL_HOOKS if 'function add(blob' in js else []):
+        if b not in js:
+            assert js.count(a) == 1, a
+            js = js.replace(a, b)
     return js
+
+HL_HOOKS = [
+    ("let blob=new Blob(chunks,{type:active.mimeType});",
+     "let blob=new Blob(chunks,{type:active.mimeType}),__d=(Date.now()-start)/1000,__hl=window.clipitHL?await window.clipitHL.finish(blob,__d):null;"),
+    ("await add(blob,start,(Date.now()-start)/1000,null,{...meta,location:await locationPromise});",
+     "let __loc=await locationPromise;if(__hl?.parts?.length){for(let p of __hl.parts)await add(p.blob,new Date(start.getTime()+p.from*1000),p.dur,null,{...meta,location:__loc,highlight:true,hlAt:p.at,hlAuto:!!p.auto});if(__hl.keepFull)await add(blob,start,__d,null,{...meta,location:__loc,highlights:__hl.marks})}else await add(blob,start,__d,null,{...meta,location:__loc,...(__hl?{highlights:__hl.marks}:{})});"),
+    ("&&(!favoritesOnly||c.favorite)&&[", "&&(!favoritesOnly||c.favorite)&&(!window.__hlOnly||c.highlight||c.highlights?.length)&&["),
+    ("media=node('div','clip-media');", "media=node('div','clip-media');if(c.highlight||c.highlights?.length)media.dataset.hl=c.highlight?'★ HIGHLIGHT':'★ '+c.highlights.length;"),
+]
 
 def main():
     css = recolor((SRC / 'design.css').read_text())
@@ -132,14 +166,24 @@ def main():
     css += '\n' + (pathlib.Path('scripts/clipit-modern.css')).read_text()
     (DST / 'design.css').write_text(css)
     (DST / 'index.html').write_text(rebrand_html((SRC / 'index.html').read_text()))
-    for f in ['app.js', 'groups-ui.js', 'onboarding.js']:
-        (DST / f).write_text(rebrand_js((DST / f).read_text()))
+    for f in ['app.js', 'onboarding.js']:
+        (DST / f).write_text(rebrand_js((DST / f).read_text()).replace('||groupUploadBusy', ''))
+    g = DST / 'groups-ui.js'
+    if g.exists():  # Standort-Teil behalten, Gruppen-App entfernen
+        src = g.read_text()
+        (DST / 'geo.js').write_text('/* Standort bei Aufnahme (aus der früheren groups-ui.js) */\n' + src[:src.index('let activeGroup=null')])
+        g.unlink()
     sw = (DST / 'sw.js').read_text()
-    sw = re.sub(r"const CACHE='[^']+'", "const CACHE='clipit-shell-v3'", sw)
+    sw = re.sub(r"const CACHE='[^']+'", "const CACHE='clipit-shell-v5'", sw)
     if "'./quick.js'" not in sw:
         sw = sw.replace("'./onboarding.js',", "'./onboarding.js','./quick.js',")
     if "'./trips.js'" not in sw:
         sw = sw.replace("'./quick.js',", "'./quick.js','./trips.js',")
+    sw = sw.replace("'./groups-ui.js',", "")
+    if "'./geo.js'" not in sw:
+        sw = sw.replace("'./app.js',", "'./app.js','./geo.js',")
+    if "'./hl.js'" not in sw:
+        sw = sw.replace("'./trips.js',", "'./trips.js','./hl.js',")
     (DST / 'sw.js').write_text(sw)
     import json
     m = json.loads((DST / 'manifest.webmanifest').read_text())

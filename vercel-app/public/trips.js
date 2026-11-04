@@ -42,7 +42,7 @@
   // ---- countdown card ----
   function nextTrip(){const now=Date.now();return trips().filter(t=>Date.parse(t.start+'T00:00:00')+86400000*(t.end?1+(Date.parse(t.end)-Date.parse(t.start))/86400000:1)>now).sort((a,b)=>a.start.localeCompare(b.start))[0]}
   function parts(ms){ms=Math.max(0,ms);const d=Math.floor(ms/864e5),h=Math.floor(ms/36e5)%24,m=Math.floor(ms/6e4)%60,s=Math.floor(ms/1e3)%60;return {d,h,m,s}}
-  function renderCard(){const home=$q('#homePage');if(!home)return;let c=$q('#tripCountdown');
+  let renderCard=function(){const home=$q('#homePage');if(!home)return;let c=$q('#tripCountdown');
     if(!c){c=document.createElement('article');c.id='tripCountdown';c.className='countdown-card';const anchor=home.querySelector('.overview-layout');home.insertBefore(c,anchor)}
     const t=nextTrip();
     if(!t){c.className='countdown-card empty-cd';c.innerHTML='<div><span class="overline">NÄCHSTE REISE</span><h2>Wohin geht’s als Nächstes?</h2><p>Plane die Reise, lade die Crew per Link oder Code ein und sieh den Countdown laufen.</p></div><div class="cd-actions"><button class="btn" id="cdNew">＋ Reise planen</button><button class="btn secondary" id="cdJoin">Code eingeben</button></div>';
@@ -117,6 +117,37 @@
   window.clipitTrips={openCreate,openJoin,openShare,openNotes,addNote,parseCode,makeCode};
   addBell();renderCard();milestones();handleLink();
   setInterval(tick,1000);
-  // Gruppen-Tab: Code-Beitritt auch dort anbieten
-  const gp=$q('#groupsPage .page-heading');if(gp&&!$q('#gpJoin')){const w=document.createElement('div');w.className='gp-actions';w.innerHTML='<button class="btn" id="gpNew">＋ Reise planen</button><button class="btn secondary" id="gpJoin">Code eingeben</button>';gp.appendChild(w);$q('#gpNew').onclick=openCreate;$q('#gpJoin').onclick=openJoin}
+  // ---- Reisen-Tab (ersetzt die alte Gruppen-App) ----
+  function status(t){const st=Date.parse(t.start+'T00:00:00'),en=t.end?Date.parse(t.end+'T23:59:59'):st+864e5-1,now=Date.now();
+    if(now<st){const d=Math.ceil((st-now)/864e5);return {k:'soon',txt:d===1?'Morgen':'in '+d+' Tagen',d}}
+    if(now<=en){return {k:'live',txt:'Läuft · Tag '+(1+Math.floor((now-st)/864e5))}}return {k:'past',txt:'Vorbei'}}
+  function clipCount(name){try{return clips.filter(c=>c.trip===name).length}catch(e){return 0}}
+  function hlCount(name){try{return clips.filter(c=>c.trip===name&&c.highlight).length}catch(e){return 0}}
+  function renderHub(){const h=$q('#tripHub');if(!h)return;const cur=$q('#trip')?.value;
+    const all=trips().sort((a,b)=>{const o={live:0,soon:1,past:2};return o[status(a).k]-o[status(b).k]||a.start.localeCompare(b.start)});
+    const fd=s=>new Date(Date.parse(s+'T00:00:00')).toLocaleDateString('de-DE',{day:'numeric',month:'short'});
+    h.innerHTML='<div class="hub-actions"><button class="btn" id="hubNew">＋ Reise planen</button><button class="btn secondary" id="hubJoin">Code eingeben</button></div>'+
+      (all.length?'<div class="hub-list">'+all.map((t,i)=>{const s=status(t),n=clipCount(t.name),hl=hlCount(t.name),on=t.name===cur;
+        return '<article class="hub-card '+s.k+(on?' current':'')+'" style="--i:'+i+'"><div class="hub-top"><span class="hub-state">'+(s.k==='live'?'<i></i>':'')+esc(s.txt)+'</span>'+(on?'<span class="hub-cur">AKTIV</span>':'')+'</div>'+
+          '<h2>'+esc(t.name)+'</h2><p>'+fd(t.start)+(t.end?' – '+fd(t.end):'')+' · <button class="code-chip" data-copy="'+esc(t.code)+'">'+esc(t.code)+'</button></p>'+
+          '<div class="hub-stats"><span><b>'+n+'</b> Clips</span><span><b>'+hl+'</b> ★ Highlights</span></div>'+
+          '<div class="hub-btns"><button class="btn" data-share="'+esc(t.code)+'">Crew einladen</button>'+(on?'<button class="btn secondary" data-film="1">Filmen</button>':'<button class="btn secondary" data-use="'+esc(t.code)+'">Aktivieren</button>')+
+          '<button class="icon-button" data-del="'+esc(t.code)+'" aria-label="Reise löschen">✕</button></div></article>'}).join('')+'</div>'
+       :'<div class="hub-empty"><span>✈</span><b>Noch keine Reise.</b><small>Plane einen Trip oder tritt mit dem Code deiner Crew bei. Alle filmen in dieselbe Reise.</small></div>')+
+      '<p class="hub-note">Der Code enthält Reisename und Startdatum – Beitritt klappt ohne Konto. Clips bleiben auf deinem Gerät, bis du sie exportierst.</p>';
+    $q('#hubNew').onclick=openCreate;$q('#hubJoin').onclick=openJoin;
+    h.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>copy(b.dataset.copy,'Code kopiert'));
+    h.querySelectorAll('[data-share]').forEach(b=>b.onclick=()=>openShare(trips().find(t=>t.code===b.dataset.share)));
+    h.querySelectorAll('[data-use]').forEach(b=>b.onclick=()=>{useTrip(trips().find(t=>t.code===b.dataset.use));renderHub()});
+    h.querySelectorAll('[data-film]').forEach(b=>b.onclick=()=>page('camera'));
+    h.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{const t=trips().find(x=>x.code===b.dataset.del);if(!confirm('„'+t.name+'“ aus deinen Reisen entfernen? Clips bleiben erhalten.'))return;save(KEY,trips().filter(x=>x.code!==t.code));renderCard()})}
+  const _renderCard=renderCard;renderCard=function(){_renderCard();renderHub()};
+  const _page=window.page;
+  window.page=function(which){
+    const tp=$q('#tripsPage');
+    if(which!=='trips'){tp?.classList.add('hidden');return _page(which)}
+    if((typeof recording==='function'&&recording())||(typeof busy!=='undefined'&&busy))return _page(which);
+    _page('home');$q('#homePage')?.classList.add('hidden');tp?.classList.remove('hidden');
+    document.body.dataset.page='trips';document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab==='trips'));renderHub()};
+  renderHub();
 })();
