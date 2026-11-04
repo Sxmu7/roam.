@@ -1,0 +1,95 @@
+/* ===== ClipIT! modern layer (layout, type, motion) ===== */
+:root{--r:24px;--glass:rgba(18,18,18,.78)}
+button{transition:transform .12s ease,background .2s,color .2s,opacity .2s}
+button:active{transform:scale(.97)}
+.btn{min-height:46px;padding:12px 20px;font-size:14px;letter-spacing:-.01em}
+.page{animation:clipEnter .45s cubic-bezier(.2,.8,.2,1)}
+@keyframes clipEnter{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+h1{font-size:40px;line-height:1.02;margin:10px 0 8px}
+.overline{font-size:11px}
+.sub{font-size:13px;line-height:1.55;max-width:none}
+.journey-card,.backup-card,.group-start form,.empty,.clip,.invite-card,.shared-card{border-radius:var(--r)!important}
+.journey-card h2{font-size:34px;letter-spacing:-.04em;font-weight:800}
+.clip{overflow:hidden}
+.clip-body h3{font-size:14px;font-weight:700}
+.clip-date,.clip-meta{font-size:11px!important}
+.play-selection{border-radius:18px;font-weight:700;font-size:14px}
+.play-selection span{color:#8f8f8a;font-weight:500}
+/* record button */
+.record{box-shadow:0 0 0 0 rgba(255,59,48,.5)}
+.record span{transition:all .25s cubic-bezier(.2,.8,.2,1)}
+.record.recording{animation:recPulse 1.4s ease-out infinite}
+.record.recording span{border-radius:12px;transform:scale(.55)}
+@keyframes recPulse{0%{box-shadow:0 0 0 0 rgba(255,59,48,.55)}100%{box-shadow:0 0 0 26px rgba(255,59,48,0)}}
+.status{font-weight:600;letter-spacing:.02em}
+/* quick chip / banner / dialog */
+.quick-chip{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px;border-radius:999px;background:#00000080;color:#fff;font-weight:700;font-size:13px;backdrop-filter:blur(12px);margin-left:auto;margin-right:8px}
+.quick-chip i{width:8px;height:8px;border-radius:50%;background:var(--rec);box-shadow:0 0 0 4px rgba(255,59,48,.25)}
+#quickBanner{position:fixed;left:50%;top:calc(76px + env(safe-area-inset-top));transform:translate(-50%,-20px);opacity:0;z-index:40;display:flex;align-items:center;gap:12px;padding:12px 18px;border-radius:999px;background:#FFC93C;color:#111;transition:all .35s cubic-bezier(.2,.8,.2,1);pointer-events:none;box-shadow:0 10px 40px rgba(0,0,0,.4)}
+#quickBanner.show{opacity:1;transform:translate(-50%,0)}
+#quickBanner i{width:10px;height:10px;border-radius:50%;background:var(--rec);animation:blink 1s infinite}
+#quickBanner b{display:block;font-size:14px}#quickBanner small{display:block;font-size:12px;opacity:.75}
+@keyframes blink{50%{opacity:.25}}
+.quick-dialog{width:min(520px,calc(100% - 28px));max-height:calc(100svh - 40px);overflow:auto;border-radius:28px;padding:26px;background:#0E0E0E;color:#F5F5F0;border:1px solid #232323}
+.quick-dialog::backdrop{background:#000000b8;backdrop-filter:blur(10px)}
+.qd-top{display:flex;justify-content:space-between;align-items:center}
+.quick-dialog h2{font-size:34px;line-height:1.05;letter-spacing:-.045em;font-weight:800;margin:14px 0 10px}
+.quick-dialog h2 span{color:var(--acc)}
+.quick-dialog p{color:#a3a39d;line-height:1.55;font-size:14px}
+.qd-link{display:flex;gap:10px;align-items:center;background:#161616;border:1px solid #262626;border-radius:18px;padding:10px 10px 10px 16px;margin:18px 0}
+.qd-link code{flex:1;font-size:13px;color:#F5F5F0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qd-link .btn{min-height:40px;padding:8px 16px}
+.qd-steps{list-style:none;padding:0;margin:0 0 14px;display:grid;gap:10px}
+.qd-steps li{display:flex;gap:12px;align-items:flex-start;background:#141414;border:1px solid #222;border-radius:16px;padding:14px;font-size:14px;line-height:1.5;color:#d6d6d0}
+.qd-steps b{flex:none;width:26px;height:26px;border-radius:50%;background:var(--acc);color:#111;display:grid;place-items:center;font-size:13px}
+.qd-steps strong{color:#fff}
+/* intro hero */
+.intro-hero{position:relative;height:220px;margin:6px 0 22px;border-radius:26px;background:radial-gradient(120% 90% at 50% 0%,#2a2208 0%,#121212 55%,#0c0c0c 100%);border:1px solid #2a2410;overflow:hidden;display:grid;place-items:center}
+.hero-mark .wm{font-size:64px;animation:heroPop .9s cubic-bezier(.2,.9,.2,1.2) both}
+.hero-mark .wm .bang:after{animation:recDot 1.6s 1s ease-in-out infinite}
+@keyframes heroPop{from{opacity:0;transform:translateY(30px) scale(.9)}to{opacity:1;transform:none}}
+@keyframes recDot{50%{transform:scale(1.35)}}
+.hero-reel{position:absolute;left:0;right:0;bottom:18px;display:flex;gap:8px;justify-content:center}
+.hero-reel i{width:44px;height:30px;border-radius:8px;background:#1f1f1f;border:1px solid #2c2c2c;animation:reel 2.4s ease-in-out infinite}
+.hero-reel i:nth-child(2){animation-delay:.15s}.hero-reel i:nth-child(3){animation-delay:.3s;background:#FFC93C;border-color:#FFC93C}.hero-reel i:nth-child(4){animation-delay:.45s}.hero-reel i:nth-child(5){animation-delay:.6s}
+@keyframes reel{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.intro-step:not(.hidden){animation:clipEnter .45s cubic-bezier(.2,.8,.2,1)}
+.intro-step h2{font-size:34px;line-height:1.05;letter-spacing:-.045em;font-weight:800}
+.intro-step p{color:#a3a39d;font-size:14px;line-height:1.55}
+.intro-points span{border-radius:16px!important}
+.intro-points b{color:var(--acc)}
+.intro-number{color:#66665f;font-weight:600}
+.intro-progress i{height:4px;border-radius:4px;background:#262626;transition:background .3s}
+.intro-progress i.done{background:var(--acc)}
+.intro-quick{display:flex;gap:14px;align-items:center;background:#141414;border:1px solid #222;border-radius:20px;padding:16px;margin:16px 0}
+.intro-quick .ab{flex:none;width:46px;height:46px;border-radius:14px;background:#1f1f1f;display:grid;place-items:center}
+.intro-quick .ab i{width:14px;height:14px;border-radius:50%;background:var(--rec);box-shadow:0 0 0 6px rgba(255,59,48,.2);animation:blink 1.4s infinite}
+.intro-quick b{display:block;font-size:15px}.intro-quick small{display:block;color:#8f8f8a;font-size:13px;margin-top:2px}
+@media(max-width:760px){
+ header{background:linear-gradient(#0A0A0Af0,#0A0A0A00);border:0;backdrop-filter:none}
+ body[data-page=camera] header{background:linear-gradient(#000000a0,#00000000)}
+ nav{left:14px;right:14px;width:auto!important;max-width:none;transform:none!important;bottom:calc(12px + env(safe-area-inset-bottom));height:68px;padding:6px 8px;border-radius:26px;background:var(--glass)!important;border:1px solid #262626!important;backdrop-filter:blur(22px) saturate(1.4);box-shadow:0 12px 40px rgba(0,0,0,.5)}
+ nav button{font-size:10.5px;padding:8px 6px;min-width:0;flex:1;border-radius:20px;gap:4px}
+ nav button.active{background:#1f1a0b!important}
+ main{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+ h1{font-size:34px}
+ .sub{font-size:12.5px}
+ .overline{font-size:10px}
+ .page-heading .btn{font-size:13px;padding:10px 16px;min-height:42px}
+ .journey-card{padding:24px;min-height:250px}
+ body[data-page=camera] main{padding-top:0;padding-bottom:0}
+ .camera{height:100svh!important;min-height:100svh!important}
+ .camhead{top:calc(74px + env(safe-area-inset-top))}
+ .camfoot{bottom:calc(98px + env(safe-area-inset-bottom))}
+ .camcenter h1{font-size:28px;font-weight:800;letter-spacing:-.04em}
+ .camcenter p{font-size:13px}
+ .record{width:84px;height:84px}.record span{width:68px;height:68px}
+ .capture-side span{font-size:11px}
+ .clip-body h3{font-size:13px}.clip-actions button{font-size:11px}
+ .toast{bottom:calc(96px + env(safe-area-inset-bottom))}
+ .intro-dialog{width:100%;max-width:100%;height:100%;max-height:100%;margin:0;border-radius:0;border:0;padding:calc(18px + env(safe-area-inset-top)) 22px calc(18px + env(safe-area-inset-bottom))}
+}
+@media(max-width:480px){html{background:#0A0A0A}}
+@media(prefers-reduced-motion:reduce){.record.recording,.hero-reel i,#quickBanner i{animation:none!important}}
+#quickBanner{top:calc(132px + env(safe-area-inset-top))}
+.toast{top:calc(78px + env(safe-area-inset-top))!important;bottom:auto!important}

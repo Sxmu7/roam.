@@ -16,6 +16,12 @@ Mobile Kamera-App für Reiseclips: aufnehmen, lokal behalten, in Gruppen teilen 
 - Ersteinrichtung in fünf Schritten; einmalige Anzeige pro Browser/Gerät und erneut aufrufbar in den Einstellungen.
 - PWA-Manifest und offline verfügbares App-Grundgerüst.
 
+## ClipIT!
+
+`vercel-app/` trägt jetzt das ClipIT!-Design (dunkel, minimalistisch). Erzeugt wird es mit `python3 scripts/clipit-theme.py` aus `public/` plus `scripts/clipit.css` und `scripts/clipit-modern.css`. Speicher-Schlüssel bleiben gleich, vorhandene Clips bleiben erhalten.
+
+**Sofort filmen:** `/?rec=1` öffnet die Kamera und startet direkt die Aufnahme (`vercel-app/public/quick.js`). iPhone: Kurzbefehl „URL öffnen“ mit diesem Link anlegen und auf den Action Button, ins Kontrollzentrum oder als Sperrbildschirm-Widget legen. Android: App-Shortcut „Sofort filmen“ im Manifest. Die Einrichtung erklärt die App selbst (Kamera → „Sofort filmen“ oder Einstellungen).
+
 ## Bereitstellung
 
 `vercel-app/` ist eine eigenständige Next.js-App für Vercel. Im Vercel-Projekt die Root Directory auf `vercel-app`, Node.js auf 24 und Build auf `npm run build` setzen. Kamera, Dateien, Onboarding und Offline-Shell laufen dort direkt.
