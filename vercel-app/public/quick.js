@@ -16,7 +16,7 @@
     history.replaceState(null,'',location.pathname);
     document.body.classList.add('quick-mode');
     const intro=document.getElementById('introDialog');
-    if(intro&&intro.open){try{localStorage.setItem('roam-onboarding-v1','done')}catch(e){}intro.close()}
+    if(intro&&intro.open){try{localStorage.setItem('clipit-onboarding-v1','done')}catch(e){}intro.close()}
     try{page('camera')}catch(e){}
     const ready=await waitFor(()=>typeof db!=='undefined'&&db);
     if(!ready){banner('Speicher lädt noch','Tippe auf den Auslöser, um zu filmen.');return}

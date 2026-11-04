@@ -67,12 +67,14 @@
      '<label>Name der Reise</label><input id="ctName" maxlength="40" placeholder="z. B. Thailand ’26">'+
      '<div class="two"><div><label>Start</label><input id="ctStart" type="date" value="'+today+'"></div><div><label>Ende (optional)</label><input id="ctEnd" type="date"></div></div>'+
      '<div class="code-preview"><span>JOIN-CODE</span><b id="ctCode">TRIP-000000</b></div><button class="btn wide" id="ctSave">Reise erstellen</button>';
-    const upd=()=>{d.querySelector('#ctCode').textContent=makeCode(d.querySelector('#ctName').value||'Trip',d.querySelector('#ctStart').value||today)};
+    const cloud=()=>window.clipitCloud?.on;const upd=()=>{d.querySelector('#ctCode').textContent=cloud()?slug(d.querySelector('#ctName').value||'Trip')+'-••••':makeCode(d.querySelector('#ctName').value||'Trip',d.querySelector('#ctStart').value||today)};
     d.querySelector('#ctName').oninput=upd;d.querySelector('#ctStart').oninput=upd;upd();
     d.querySelector('[data-close]').onclick=()=>closeSheet(d);
-    d.querySelector('#ctSave').onclick=()=>{const name=d.querySelector('#ctName').value.trim();const start=d.querySelector('#ctStart').value;const end=d.querySelector('#ctEnd').value||'';
+    d.querySelector('#ctSave').onclick=async()=>{const name=d.querySelector('#ctName').value.trim();const start=d.querySelector('#ctStart').value;const end=d.querySelector('#ctEnd').value||'';
       if(!name||!start){pop('Fast geschafft','Name und Startdatum fehlen noch.');return}
-      const t={name,start,end:end&&end>=start?end:'',code:makeCode(name,start),owner:true,created:Date.now()};upsert(t);closeSheet(d);
+      let t={name,start,end:end&&end>=start?end:'',code:makeCode(name,start),owner:true,created:Date.now()};
+      if(cloud()){const b=d.querySelector('#ctSave');b.disabled=true;b.textContent='Wird angelegt …';try{const c=await clipitCloud.createTrip(t);t={...t,code:c.code,id:c.id,cloud:true}}catch(e){pop('Offline angelegt','Cloud gerade nicht erreichbar – Code funktioniert trotzdem.')}finally{b.disabled=false}}
+      upsert(t);useTrip(t);closeSheet(d);
       addNote('Reise erstellt',name+' · noch '+Math.max(0,Math.ceil((Date.parse(start)-Date.now())/864e5))+' Tage','✈');setTimeout(()=>openShare(t),260)};
     openSheet(d);setTimeout(()=>d.querySelector('#ctName').focus(),250)}
   function openShare(t){let d=$q('#shareSheet');if(!d){d=document.createElement('dialog');d.id='shareSheet';d.className='sheet';document.body.appendChild(d)}
@@ -86,9 +88,10 @@
     d.querySelector('#shShare').onclick=async()=>{const text='Komm mit auf '+t.name+'! Join mit ClipIT!: '+url+' (Code '+t.code+')';try{if(navigator.share)await navigator.share({title:'ClipIT! · '+t.name,text,url});else copy(url,'Link kopiert')}catch(e){}};
     d.querySelector('#shCopy').onclick=()=>copy(url,'Link kopiert');d.querySelector('#shCodeCopy').onclick=()=>copy(t.code,'Code kopiert');openSheet(d)}
   function openJoin(){let d=$q('#joinSheet');if(!d){d=document.createElement('dialog');d.id='joinSheet';d.className='sheet';document.body.appendChild(d)}
-    d.innerHTML='<div class="sheet-grip"></div><div class="sheet-head"><h2>Reise beitreten</h2><button class="text-button" data-close>Abbrechen</button></div><p class="sheet-sub">Gib den Code ein, den du bekommen hast.</p><input id="jnCode" class="code-input" maxlength="20" placeholder="THAILAND-261214" autocomplete="off" autocapitalize="characters"><p class="field-note" id="jnMsg"></p><button class="btn wide" id="jnGo">Beitreten</button>';
+    d.innerHTML='<div class="sheet-grip"></div><div class="sheet-head"><h2>Reise beitreten</h2><button class="text-button" data-close>Abbrechen</button></div><p class="sheet-sub">Gib den Code ein, den du bekommen hast.</p><input id="jnCode" class="code-input" maxlength="20" placeholder="THAILAND26-K7Q2MXAB" autocomplete="off" autocapitalize="characters"><p class="field-note" id="jnMsg"></p><button class="btn wide" id="jnGo">Beitreten</button>';
     d.querySelector('[data-close]').onclick=()=>closeSheet(d);
-    d.querySelector('#jnGo').onclick=()=>{const p=parseCode(d.querySelector('#jnCode').value);if(!p){d.querySelector('#jnMsg').textContent='Der Code sieht nicht richtig aus. Beispiel: THAILAND-261214';d.querySelector('#jnCode').classList.add('shake');setTimeout(()=>d.querySelector('#jnCode').classList.remove('shake'),400);return}
+    d.querySelector('#jnGo').onclick=async()=>{const raw=d.querySelector('#jnCode').value;if(window.clipitCloud?.isCloudCode(raw)){const b=d.querySelector('#jnGo');b.disabled=true;b.textContent='Suche Reise …';try{const t=await clipitCloud.fetchTrip(raw);joined({...t,cloud:true});closeSheet(d)}catch(e){d.querySelector('#jnMsg').textContent=e.message||'Reise nicht gefunden'}finally{b.disabled=false;b.textContent='Beitreten'}return}
+      const p=parseCode(raw);if(!p){d.querySelector('#jnMsg').textContent='Der Code sieht nicht richtig aus. Beispiel: THAILAND-261214';d.querySelector('#jnCode').classList.add('shake');setTimeout(()=>d.querySelector('#jnCode').classList.remove('shake'),400);return}
       joined(p);closeSheet(d)};openSheet(d);setTimeout(()=>d.querySelector('#jnCode').focus(),250)}
   function openList(){let d=$q('#listSheet');if(!d){d=document.createElement('dialog');d.id='listSheet';d.className='sheet';document.body.appendChild(d)}
     const all=trips().sort((a,b)=>a.start.localeCompare(b.start));
@@ -97,7 +100,7 @@
     d.querySelectorAll('[data-share]').forEach(b=>b.onclick=()=>{closeSheet(d);setTimeout(()=>openShare(trips().find(t=>t.code===b.dataset.share)),240)});
     d.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{save(KEY,trips().filter(t=>t.code!==b.dataset.del));renderCard();closeSheet(d)});
     d.querySelector('#lsNew').onclick=()=>{closeSheet(d);setTimeout(openCreate,240)};d.querySelector('#lsJoin').onclick=()=>{closeSheet(d);setTimeout(openJoin,240)};openSheet(d)}
-  function joined(p){const ex=trips().find(t=>t.code===p.code);const t=ex||{name:p.name,start:p.start,end:p.end||'',code:p.code,owner:false,created:Date.now()};upsert(t);useTrip(t);
+  function joined(p){const ex=trips().find(t=>t.code===p.code);const t=ex||{name:p.name,start:p.start,end:p.end||'',code:p.code,owner:false,created:Date.now(),...(p.cloud?{cloud:true,id:p.id}:{})};upsert(t);useTrip(t);
     try{page('home')}catch(e){}const days=Math.ceil((Date.parse(t.start)-Date.now())/864e5);addNote('Du bist dabei!',t.name+(days>0?' · noch '+days+' Tage':' · läuft gerade'),'★');confetti()}
   function confetti(){const c=document.createElement('div');c.className='confetti';for(let i=0;i<26;i++){const s=document.createElement('i');s.style.left=(Math.random()*100)+'%';s.style.animationDelay=(Math.random()*.3)+'s';s.style.background=['#FFC93C','#FF3B30','#F5F5F0'][i%3];c.appendChild(s)}document.body.appendChild(c);setTimeout(()=>c.remove(),1800)}
 
@@ -110,11 +113,13 @@
     b.innerHTML='<svg viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 6 2 7 2 7H4s2-1 2-7M10 20a2 2 0 0 0 4 0"/></svg>';hr.insertBefore(b,hr.lastElementChild);b.onclick=openNotes;renderBell()}
 
   // ---- incoming link ----
-  function handleLink(){const q=new URLSearchParams(location.search);const code=q.get('join');if(!code)return;const p=parseCode(code);history.replaceState(null,'',location.pathname);
+  function handleLink(){const q=new URLSearchParams(location.search);const code=q.get('join');if(!code)return;history.replaceState(null,'',location.pathname);
+    if(window.clipitCloud?.isCloudCode(code)){const go=async()=>{try{const t=await clipitCloud.fetchTrip(code);joined({...t,cloud:true})}catch(e){pop('Reise nicht gefunden',e.message||'Frag nach einem neuen Link.')}};const intro=$q('#introDialog');if(intro&&intro.open)intro.addEventListener('close',go,{once:true});else setTimeout(go,300);return}
+    const p=parseCode(code);
     if(!p){pop('Link ungültig','Frag nach einem neuen Einladungslink.');return}if(q.get('n'))p.name=q.get('n').slice(0,40);if(q.get('e'))p.end=q.get('e');
     const intro=$q('#introDialog');const go=()=>joined(p);if(intro&&intro.open){intro.addEventListener('close',go,{once:true})}else setTimeout(go,300)}
 
-  window.clipitTrips={openCreate,openJoin,openShare,openNotes,addNote,parseCode,makeCode};
+  window.clipitTrips={openCreate,openJoin,openShare,openNotes,addNote,parseCode,makeCode,pop,trips,useTrip,renderHub:()=>renderHub(),systemNotify};
   addBell();renderCard();milestones();handleLink();
   setInterval(tick,1000);
   // ---- Reisen-Tab (ersetzt die alte Gruppen-App) ----
@@ -130,16 +135,17 @@
       (all.length?'<div class="hub-list">'+all.map((t,i)=>{const s=status(t),n=clipCount(t.name),hl=hlCount(t.name),on=t.name===cur;
         return '<article class="hub-card '+s.k+(on?' current':'')+'" style="--i:'+i+'"><div class="hub-top"><span class="hub-state">'+(s.k==='live'?'<i></i>':'')+esc(s.txt)+'</span>'+(on?'<span class="hub-cur">AKTIV</span>':'')+'</div>'+
           '<h2>'+esc(t.name)+'</h2><p>'+fd(t.start)+(t.end?' – '+fd(t.end):'')+' · <button class="code-chip" data-copy="'+esc(t.code)+'">'+esc(t.code)+'</button></p>'+
-          '<div class="hub-stats"><span><b>'+n+'</b> Clips</span><span><b>'+hl+'</b> ★ Highlights</span></div>'+
+          '<div class="hub-stats"><span><b>'+n+'</b> Clips</span><span><b>'+hl+'</b> ★ Highlights</span></div>'+(t.cloud?'<div class="hub-cloud" data-cloud="'+esc(t.code)+'"></div>':'<p class="hub-offline">Offline-Reise · ohne gemeinsamen Speicher</p>')+
           '<div class="hub-btns"><button class="btn" data-share="'+esc(t.code)+'">Crew einladen</button>'+(on?'<button class="btn secondary" data-film="1">Filmen</button>':'<button class="btn secondary" data-use="'+esc(t.code)+'">Aktivieren</button>')+
           '<button class="icon-button" data-del="'+esc(t.code)+'" aria-label="Reise löschen">✕</button></div></article>'}).join('')+'</div>'
        :'<div class="hub-empty"><span>✈</span><b>Noch keine Reise.</b><small>Plane einen Trip oder tritt mit dem Code deiner Crew bei. Alle filmen in dieselbe Reise.</small></div>')+
-      '<p class="hub-note">Der Code enthält Reisename und Startdatum – Beitritt klappt ohne Konto. Clips bleiben auf deinem Gerät, bis du sie exportierst.</p>';
+      '<p class="hub-note">'+(window.clipitCloud?.on?'Neue Reisen bekommen einen geheimen Code. Nur wer ihn hat, sieht die Clips der Crew – Beitritt ohne Konto.':'Der Code enthält Reisename und Startdatum – Beitritt klappt ohne Konto. Clips bleiben auf deinem Gerät, bis du sie exportierst.')+'</p>';
     $q('#hubNew').onclick=openCreate;$q('#hubJoin').onclick=openJoin;
     h.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>copy(b.dataset.copy,'Code kopiert'));
     h.querySelectorAll('[data-share]').forEach(b=>b.onclick=()=>openShare(trips().find(t=>t.code===b.dataset.share)));
     h.querySelectorAll('[data-use]').forEach(b=>b.onclick=()=>{useTrip(trips().find(t=>t.code===b.dataset.use));renderHub()});
     h.querySelectorAll('[data-film]').forEach(b=>b.onclick=()=>page('camera'));
+    try{window.clipitCloud?.decorate(h)}catch(e){}
     h.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{const t=trips().find(x=>x.code===b.dataset.del);if(!confirm('„'+t.name+'“ aus deinen Reisen entfernen? Clips bleiben erhalten.'))return;save(KEY,trips().filter(x=>x.code!==t.code));renderCard()})}
   const _renderCard=renderCard;renderCard=function(){_renderCard();renderHub()};
   const _page=window.page;

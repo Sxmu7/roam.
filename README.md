@@ -1,4 +1,4 @@
-# ROAM · Reise-Kamera als PWA
+# ClipIT! · Gemeinsam filmen. Ein Film.
 
 Mobile Kamera-App für Reiseclips: aufnehmen, lokal behalten, in Gruppen teilen und unveränderte Originaldateien für den späteren Schnitt exportieren.
 
@@ -22,13 +22,35 @@ Mobile Kamera-App für Reiseclips: aufnehmen, lokal behalten, in Gruppen teilen 
 
 **Sofort filmen:** `/?rec=1` öffnet die Kamera und startet direkt die Aufnahme (`vercel-app/public/quick.js`). iPhone: Kurzbefehl „URL öffnen“ mit diesem Link anlegen und auf den Action Button, ins Kontrollzentrum oder als Sperrbildschirm-Widget legen. Android: App-Shortcut „Sofort filmen“ im Manifest. Die Einrichtung erklärt die App selbst (Kamera → „Sofort filmen“ oder Einstellungen).
 
+## ClipIT! Cloud & Google Drive
+
+Die Vercel-App (`vercel-app/`) hat API-Routen unter `/api` für den gemeinsamen Reise-Speicher:
+
+| Route | Zweck |
+| --- | --- |
+| `GET /api/config` | Zeigt der App, ob Cloud, Push und Drive eingerichtet sind |
+| `POST/GET /api/trips` | Reise anlegen / per Code laden (Code `SLUG-XXXXXXXX`, 8 zufällige Zeichen) |
+| `POST /api/upload` | Kurzlebiges Upload-Token: Videos gehen direkt in Vercel Blob |
+| `GET/POST/DELETE /api/clips` | Crew-Feed lesen, hochgeladene Clips eintragen, eigene löschen |
+| `POST /api/push` | Web-Push-Abo für „Crew hat hochgeladen“ |
+
+Einrichtung im Vercel-Dashboard (Projekt → Settings / Storage):
+
+1. **Storage → Create → Blob** anlegen und mit dem Projekt verbinden (setzt `BLOB_READ_WRITE_TOKEN`). Ohne Blob läuft ClipIT! wie bisher rein lokal.
+2. Optional Push: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` (erzeugen mit `npx web-push generate-vapid-keys`), optional `VAPID_SUBJECT`.
+3. Optional Google Drive: in der Google Cloud Console eine OAuth-Client-ID (Typ Web) anlegen, die App-Domain als „Autorisierte JavaScript-Quelle“ eintragen, Drive API aktivieren und `GOOGLE_CLIENT_ID` setzen. ClipIT! nutzt nur den Scope `drive.file` und legt Clips unter `ClipIT!/<Reise>` ab.
+
+Datenschutz: Videos liegen in Vercel Blob unter nicht erratbaren URLs; die App gibt sie nur an Geräte mit dem vollständigen Reise-Code heraus. Offline-Reisen (Code `NAME-JJMMTT`) bleiben rein lokal.
+
+Daten aus der früheren Version (ROAM) übernimmt `migrate.js` beim ersten Start automatisch (localStorage `roam-*` → `clipit-*`, IndexedDB `roam-v1` → `clipit-v1`); die alten Daten bleiben als Sicherung liegen.
+
 ## Bereitstellung
 
 `vercel-app/` ist eine eigenständige Next.js-App für Vercel. Im Vercel-Projekt die Root Directory auf `vercel-app`, Node.js auf 24 und Build auf `npm run build` setzen. Kamera, Dateien, Onboarding und Offline-Shell laufen dort direkt.
 
 Gruppenreisen laufen weiterhin unter der bestehenden geschützten Sites-Adresse. Der Gruppen-Tab der Vercel-App verlinkt dorthin. Gemeinsame Originaldateien und Gruppen bleiben auf Cloudflare D1/R2 gespeichert. Eine direkte Backend-Verbindung aus Vercel ist noch nicht freigeschaltet; es wurden keine Backend-Geheimnisse auf Vercel übertragen.
 
-Lokale Clips gehören zur jeweiligen Domain. Vor einem Wechsel ein ROAM-ZIP exportieren und in der anderen App wieder importieren. Für Änderungen an gemeinsamen Assets beide `public/`-Verzeichnisse aktualisieren; die Vercel-Fassung von `groups-ui.js` enthält den Wechsel zur Gruppen-App.
+Lokale Clips gehören zur jeweiligen Domain. Vor einem Wechsel ein ClipIT!-ZIP exportieren und in der anderen App wieder importieren. Für Änderungen an gemeinsamen Assets beide `public/`-Verzeichnisse aktualisieren; die frühere Gruppen-App ist entfernt – alles läuft über ClipIT!-Reisen (`trips.js`, `cloud.js`).
 
 ## Lokal installieren und prüfen
 
@@ -77,7 +99,7 @@ Kamera- und Standortzugriff benötigen einen passenden Browser, einen sicheren K
 
 Der Reiseplayer verbindet Clips nur zur Wiedergabe. Die App rendert noch keinen fertigen Vlog als einzelne Videodatei. Die FCPXML-Datei ist ein vorbereiteter Rohschnitt; Medien müssen im Schnittprogramm gegebenenfalls neu verknüpft werden.
 
-Beim Wechsel auf eine andere Domain bleiben lokale Browserdaten auf der bisherigen Domain. Vorher Originale als ROAM-ZIP exportieren und auf der neuen Domain wieder importieren. Eine neue Domain übernimmt diese Daten nicht automatisch.
+Beim Wechsel auf eine andere Domain bleiben lokale Browserdaten auf der bisherigen Domain. Vorher Originale als ClipIT!-ZIP exportieren und auf der neuen Domain wieder importieren. Eine neue Domain übernimmt diese Daten nicht automatisch.
 
 ## Zugangsdaten und Datenschutz
 

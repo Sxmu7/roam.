@@ -100,7 +100,7 @@ def rebrand_html(h):
     h = replace_step(h, 4, INTRO4_HEAD)
     for a, b in [('<h2>Dein nächstes Kapitel.</h2>', '<h2>Wer filmt?</h2>'), ('<h2>Bereit zum Aufnehmen.</h2>', '<h2>Kamera bereit?</h2>'),
                  ('<h2>Gemeinsam unterwegs.</h2>', '<h2>Mit der Crew.</h2>'), ('placeholder="z. B. Brasilien 2027"', 'placeholder="z. B. Thailand ’26"'),
-                 ('<script src="onboarding.js"></script>', '<script src="onboarding.js"></script><script src="quick.js"></script><script src="trips.js"></script><script src="hl.js"></script>')]:
+                 ('<script src="onboarding.js"></script>', '<script src="onboarding.js"></script><script src="quick.js"></script><script src="vendor-blob.js"></script><script src="cloud.js"></script><script src="trips.js"></script><script src="hl.js"></script><script src="drive.js"></script>')]:
         h = h.replace(a, b)
     R = [
         ('<a class="brand" href="./"><span class="brand-icon"><svg><use href="#i-camera"/></svg></span>roam</a>', '<a class="brand" href="./" aria-label="ClipIT!">' + WM + '</a>'),
@@ -115,6 +115,10 @@ def rebrand_html(h):
         ('REISETAGEBUCH', 'CLIPIT!'),
         ('▷ Reisevorschau abspielen <span>Clips hintereinander ansehen</span>', '▷ Als Film abspielen <span>Alle Clips chronologisch</span>'),
         ('>▷ Abspielen<', '>▷ Film<'),
+        ('Exportiere deine Clips regelmäßig. Cloud-Backup ist noch nicht enthalten.', 'Reisen mit Cloud-Code teilen Clips mit der Crew. Sicherung auch in Google Drive.'),
+        ('<b>Lokal · ohne Upload</b>', '<b>Gerät + Crew-Cloud</b>'),
+        ('Noch kein automatischer Video-Render, Cloud-Backup oder natives Widget.', 'Noch kein automatischer Video-Render.'),
+        ('Keine automatische Sicherung.', 'Sicherung über die Crew-Cloud oder Google Drive.'),
     ]
     for a, b in R:
         h = h.replace(a, b)
@@ -137,6 +141,7 @@ def one_app(h):
     h = re.sub(r'<dialog id="groupUploadDialog">.*?</dialog>', '', h, flags=re.S)
     h = re.sub(r'<div class="intro-step hidden" data-step="3">.*?(?=<div class="intro-step hidden" data-step="4">)', INTRO3, h, flags=re.S)
     h = h.replace('<script src="groups-ui.js"></script>', '<script src="geo.js"></script>')
+    h = h.replace('<script src="app.js"></script>', '<script src="migrate.js"></script><script src="app.js"></script>')
     h = h.replace(' Nur ausdrücklich in Gruppen geteilte Clips liegen zusätzlich online.', '')
     h = h.replace('Kein Standortverlauf und kein automatisches Teilen mit Gruppen.', 'Kein Standortverlauf, nichts wird automatisch geteilt.')
     return h
@@ -145,11 +150,21 @@ def rebrand_js(js):
     for a, b in [('ROAM-ZIP', 'ClipIT!-ZIP'), ('ROAM-App.', 'ClipIT!-App.'), ('ROAM-Export mit', 'ClipIT!-Export mit'),
                  ('ROAM-Originale-ZIP-Export', 'ClipIT!-Originale-ZIP-Export'), ('ROAM Export\\n', 'ClipIT! Export\\n')]:
         js = js.replace(a, b)
+    js = re.sub(r"'roam-(?!v1')", "'clipit-", js)
+    for a, b in RENAME:
+        js = js.replace(a, b)
     for a, b in (HL_HOOKS if 'function add(blob' in js else []):
         if b not in js:
             assert js.count(a) == 1, a
             js = js.replace(a, b)
     return js
+
+RENAME = [
+    ("let request=indexedDB.open('roam-v1',1);request.onupgradeneeded=()=>request.result.createObjectStore('clips',{keyPath:'id'});request.onsuccess=()=>{db=request.result;refresh()};request.onerror=()=>toast('Lokaler Speicher nicht verfügbar. Bitte normalen Browsermodus verwenden.');savePrefs();",
+     "window.clipitDB().then(d=>{db=d;refresh()},()=>toast('Lokaler Speicher nicht verfügbar. Bitte normalen Browsermodus verwenden.'));savePrefs();"),
+    ("'ROAM_'+stamp", "'ClipIT_'+stamp"), ("name:'ROAM.fcpxml'", "name:'ClipIT.fcpxml'"), ('<event name="ROAM">', '<event name="ClipIT!">'),
+    ('readRoamZip', 'readClipZip'), ('keine ROAM-Metadaten', 'keine ClipIT!-Metadaten'),
+]
 
 HL_HOOKS = [
     ("let blob=new Blob(chunks,{type:active.mimeType});",
@@ -160,13 +175,21 @@ HL_HOOKS = [
     ("media=node('div','clip-media');", "media=node('div','clip-media');if(c.highlight||c.highlights?.length)media.dataset.hl=c.highlight?'★ HIGHLIGHT':'★ '+c.highlights.length;"),
 ]
 
+SW_PUSH = r"""
+/* clipit-push: Mitteilung, wenn die Crew hochlädt */
+self.addEventListener('push',e=>{let d={};try{d=e.data.json()}catch(_){d={title:'ClipIT!',body:e.data&&e.data.text()}}
+  e.waitUntil(self.registration.showNotification(d.title||'ClipIT!',{body:d.body||'',tag:d.tag,icon:'icon-192.png',badge:'icon-192.png',data:{url:d.url||'/'}}))});
+self.addEventListener('notificationclick',e=>{e.notification.close();const url=e.notification.data&&e.notification.data.url||'/';
+  e.waitUntil(clients.matchAll({type:'window',includeUncontrolled:true}).then(l=>{for(const c of l){if('focus'in c){c.navigate(url);return c.focus()}}return clients.openWindow(url)}))});
+"""
+
 def main():
     css = recolor((SRC / 'design.css').read_text())
     css += '\n' + (pathlib.Path('scripts/clipit.css')).read_text()
     css += '\n' + (pathlib.Path('scripts/clipit-modern.css')).read_text()
     (DST / 'design.css').write_text(css)
     (DST / 'index.html').write_text(rebrand_html((SRC / 'index.html').read_text()))
-    for f in ['app.js', 'onboarding.js']:
+    for f in ['app.js', 'onboarding.js', 'geo.js', 'quick.js']:
         (DST / f).write_text(rebrand_js((DST / f).read_text()).replace('||groupUploadBusy', ''))
     g = DST / 'groups-ui.js'
     if g.exists():  # Standort-Teil behalten, Gruppen-App entfernen
@@ -174,7 +197,7 @@ def main():
         (DST / 'geo.js').write_text('/* Standort bei Aufnahme (aus der früheren groups-ui.js) */\n' + src[:src.index('let activeGroup=null')])
         g.unlink()
     sw = (DST / 'sw.js').read_text()
-    sw = re.sub(r"const CACHE='[^']+'", "const CACHE='clipit-shell-v5'", sw)
+    sw = re.sub(r"const CACHE='[^']+'", "const CACHE='clipit-shell-v6'", sw)
     if "'./quick.js'" not in sw:
         sw = sw.replace("'./onboarding.js',", "'./onboarding.js','./quick.js',")
     if "'./trips.js'" not in sw:
@@ -184,6 +207,11 @@ def main():
         sw = sw.replace("'./app.js',", "'./app.js','./geo.js',")
     if "'./hl.js'" not in sw:
         sw = sw.replace("'./trips.js',", "'./trips.js','./hl.js',")
+    for f in ['migrate.js', 'vendor-blob.js', 'cloud.js', 'drive.js']:
+        if "'./%s'" % f not in sw:
+            sw = sw.replace("'./hl.js',", "'./hl.js','./%s'," % f)
+    if 'clipit-push' not in sw:
+        sw += SW_PUSH
     (DST / 'sw.js').write_text(sw)
     import json
     m = json.loads((DST / 'manifest.webmanifest').read_text())

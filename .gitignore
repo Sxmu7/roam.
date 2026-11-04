@@ -52,3 +52,9 @@ yarn-error.log*
 **/node_modules/
 **/.next/
 **/.vercel/
+
+node_modules/
+.next/
+vercel-app/AGENTS.md
+vercel-app/CLAUDE.md
+vercel-app/next-env.d.ts

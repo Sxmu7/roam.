@@ -320,3 +320,34 @@ dialog.sheet input#hlLen{-webkit-appearance:none;appearance:none;height:30px;pad
 .hub-empty span{font-size:34px;color:#FFC93C;animation:popIn .6s cubic-bezier(.2,1.5,.4,1)}.hub-empty b{font-size:20px}.hub-empty small{color:#8f8f8a;max-width:320px;line-height:1.5}
 .hub-note{font-size:12px;color:#6f6f6a;margin:18px 2px 0;line-height:1.5}
 @keyframes recPulse{50%{opacity:.35}}
+/* ---- v6: Cloud + Drive ---- */
+.hub-cloud{margin:0 0 14px}
+.hc-crew{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;border-radius:18px;border:1px solid #2a2a2a;background:#0d0d0d;color:#F5F5F0;text-align:left;transition:.2s}
+.hc-crew:active{transform:scale(.98)}.hc-crew span:nth-child(2){flex:1;display:flex;flex-direction:column;gap:2px}
+.hc-crew b{font-size:14px}.hc-crew small{font-size:11px;color:#8f8f8a}.hc-crew i{font-style:normal;color:#FFC93C;font-size:20px}
+.hc-ic{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;background:#FFC93C1a;color:#FFC93C;font-size:17px}
+.hc-row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px}
+.hc-status{font-size:11px;color:#FFC93C;white-space:nowrap}
+.hc-toggle{display:flex!important;align-items:center;gap:10px;font-size:12px!important;color:#cfcfc8!important;margin:0!important;cursor:pointer}
+.hc-toggle input{position:absolute;opacity:0;width:1px!important;height:1px!important}
+.hc-toggle span{position:relative;flex:none;width:38px;height:22px;border-radius:11px;background:#2c2c2c;transition:.2s}
+.hc-toggle span::after{content:'';position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:50%;background:#8f8f8a;transition:.25s cubic-bezier(.2,1.4,.4,1)}
+.hc-toggle input:checked+span{background:#FFC93C}.hc-toggle input:checked+span::after{left:19px;background:#0A0A0A}
+.hub-offline{font-size:11px!important;color:#6f6f6a!important;margin:-6px 0 14px!important}
+.crew-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.crew-grid figure{margin:0;border-radius:18px;overflow:hidden;background:#151515;border:1px solid #232323;animation:clipEnter .45s cubic-bezier(.2,.9,.2,1) both;animation-delay:calc(var(--i)*40ms)}
+.crew-grid figure.hl{border-color:#FFC93C88}
+.crew-grid video{width:100%;aspect-ratio:9/12;object-fit:cover;background:#000;display:block}
+.crew-grid figcaption{display:flex;align-items:center;gap:6px;padding:8px 10px}
+.crew-grid figcaption b{font-size:12px}.crew-grid figcaption small{flex:1;font-size:10px;color:#8f8f8a}
+.crew-grid figcaption .text-button{font-size:18px;color:#FFC93C;padding:0 4px}.crew-ok{color:#4cd964;font-weight:800}
+.drive-hero{display:flex;gap:14px;align-items:center;padding:16px;border-radius:20px;background:#151515;border:1px solid #232323;margin:4px 0 16px}
+.drive-hero b{display:block;font-size:15px}.drive-hero small{font-size:12px;color:#8f8f8a}
+.drive-logo{position:relative;flex:none;width:44px;height:40px}
+.drive-logo i{position:absolute;width:20px;height:34px;border-radius:5px;transform-origin:50% 100%}
+.drive-logo i:nth-child(1){left:12px;top:0;background:#FFC93C;transform:rotate(30deg)}
+.drive-logo i:nth-child(2){left:12px;top:0;background:#4cd964;transform:rotate(-30deg)}
+.drive-logo i:nth-child(3){left:2px;top:22px;width:40px;height:14px;background:#3b82f6}
+.drive-auto{margin:6px 0 16px!important}
+.drive-count{display:flex;align-items:baseline;gap:8px;margin-bottom:16px}.drive-count b{font-size:34px;font-weight:800;color:#FFC93C;letter-spacing:-.04em}.drive-count span{color:#a3a39d;font-size:13px}
+#driveSetup{position:relative}#driveSetup[data-count]:not([data-count=""])::after{content:attr(data-count);position:absolute;right:14px;top:50%;transform:translateY(-50%);min-width:22px;height:22px;border-radius:11px;background:#FFC93C;color:#0A0A0A;font:800 11px/22px Inter,system-ui;text-align:center}
