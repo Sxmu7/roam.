@@ -119,14 +119,14 @@
     if(!p){pop('Link ungültig','Frag nach einem neuen Einladungslink.');return}if(q.get('n'))p.name=q.get('n').slice(0,40);if(q.get('e'))p.end=q.get('e');
     const intro=$q('#introDialog');const go=()=>joined(p);if(intro&&intro.open){intro.addEventListener('close',go,{once:true})}else setTimeout(go,300)}
 
-  window.clipitTrips={openCreate,openJoin,openShare,openNotes,addNote,parseCode,makeCode,pop,trips,useTrip,renderHub:()=>renderHub(),systemNotify};
+  window.clipitTrips={confetti,openCreate,openJoin,openShare,openNotes,addNote,parseCode,makeCode,pop,trips,useTrip,renderHub:()=>renderHub(),systemNotify};
   addBell();renderCard();milestones();handleLink();
   setInterval(tick,1000);
   // ---- Reisen-Tab (ersetzt die alte Gruppen-App) ----
   function status(t){const st=Date.parse(t.start+'T00:00:00'),en=t.end?Date.parse(t.end+'T23:59:59'):st+864e5-1,now=Date.now();
     if(now<st){const d=Math.ceil((st-now)/864e5);return {k:'soon',txt:d===1?'Morgen':'in '+d+' Tagen',d}}
     if(now<=en){return {k:'live',txt:'Läuft · Tag '+(1+Math.floor((now-st)/864e5))}}return {k:'past',txt:'Vorbei'}}
-  function clipCount(name){try{return clips.filter(c=>c.trip===name).length}catch(e){return 0}}
+  function clipCount(name){try{return clips.filter(c=>c.trip===name&&!c.film).length}catch(e){return 0}}
   function hlCount(name){try{return clips.filter(c=>c.trip===name&&c.highlight).length}catch(e){return 0}}
   function renderHub(){const h=$q('#tripHub');if(!h)return;const cur=$q('#trip')?.value;
     const all=trips().sort((a,b)=>{const o={live:0,soon:1,past:2};return o[status(a).k]-o[status(b).k]||a.start.localeCompare(b.start)});
@@ -135,7 +135,7 @@
       (all.length?'<div class="hub-list">'+all.map((t,i)=>{const s=status(t),n=clipCount(t.name),hl=hlCount(t.name),on=t.name===cur;
         return '<article class="hub-card '+s.k+(on?' current':'')+'" style="--i:'+i+'"><div class="hub-top"><span class="hub-state">'+(s.k==='live'?'<i></i>':'')+esc(s.txt)+'</span>'+(on?'<span class="hub-cur">AKTIV</span>':'')+'</div>'+
           '<h2>'+esc(t.name)+'</h2><p>'+fd(t.start)+(t.end?' – '+fd(t.end):'')+' · <button class="code-chip" data-copy="'+esc(t.code)+'">'+esc(t.code)+'</button></p>'+
-          '<div class="hub-stats"><span><b>'+n+'</b> Clips</span><span><b>'+hl+'</b> ★ Highlights</span></div>'+(t.cloud?'<div class="hub-cloud" data-cloud="'+esc(t.code)+'"></div>':'<p class="hub-offline">Offline-Reise · ohne gemeinsamen Speicher</p>')+
+          '<div class="hub-stats"><span><b>'+n+'</b> Clips</span><span><b>'+hl+'</b> ★ Highlights</span></div>'+(n?'<div class="hub-media"><button data-mk="film" data-trip="'+esc(t.name)+'"><span>🎬</span>Film</button><button data-mk="story" data-trip="'+esc(t.name)+'"><span>▶</span>Rückblick</button><button data-mk="map" data-trip="'+esc(t.name)+'"><span>⌖</span>Karte</button></div>':'')+(t.cloud?'<div class="hub-cloud" data-cloud="'+esc(t.code)+'"></div>':'<p class="hub-offline">Offline-Reise · ohne gemeinsamen Speicher</p>')+
           '<div class="hub-btns"><button class="btn" data-share="'+esc(t.code)+'">Crew einladen</button>'+(on?'<button class="btn secondary" data-film="1">Filmen</button>':'<button class="btn secondary" data-use="'+esc(t.code)+'">Aktivieren</button>')+
           '<button class="icon-button" data-del="'+esc(t.code)+'" aria-label="Reise löschen">✕</button></div></article>'}).join('')+'</div>'
        :'<div class="hub-empty"><span>✈</span><b>Noch keine Reise.</b><small>Plane einen Trip oder tritt mit dem Code deiner Crew bei. Alle filmen in dieselbe Reise.</small></div>')+
@@ -146,6 +146,7 @@
     h.querySelectorAll('[data-use]').forEach(b=>b.onclick=()=>{useTrip(trips().find(t=>t.code===b.dataset.use));renderHub()});
     h.querySelectorAll('[data-film]').forEach(b=>b.onclick=()=>page('camera'));
     try{window.clipitCloud?.decorate(h)}catch(e){}
+    h.querySelectorAll('[data-mk]').forEach(b=>b.onclick=()=>{const f={film:window.clipitFilm,story:window.clipitStory,map:window.clipitMap}[b.dataset.mk];f?.open(b.dataset.trip)});
     h.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{const t=trips().find(x=>x.code===b.dataset.del);if(!confirm('„'+t.name+'“ aus deinen Reisen entfernen? Clips bleiben erhalten.'))return;save(KEY,trips().filter(x=>x.code!==t.code));renderCard()})}
   const _renderCard=renderCard;renderCard=function(){_renderCard();renderHub()};
   const _page=window.page;

@@ -50,7 +50,7 @@
   function status(code,txt){const el=document.querySelector('.hub-cloud[data-cloud="'+code+'"] .hc-status');if(el)el.textContent=txt}
 
   // eigene neue Clips automatisch einreihen
-  function wrapAdd(){if(typeof add!=='function'||add.__clip)return;const orig=add;add=async function(...a){const c=await orig.apply(this,a);try{const t=c&&tripOf(c.trip);if(t&&!c.cloudUrl&&!c.cloudId&&auto(t.code))enqueue(c.id)}catch(e){}return c};add.__clip=1}
+  function wrapAdd(){if(typeof add!=='function'||add.__clip)return;const orig=add;add=async function(...a){const c=await orig.apply(this,a);try{const t=c&&tripOf(c.trip);if(t&&!c.film&&!c.cloudUrl&&!c.cloudId&&auto(t.code))enqueue(c.id)}catch(e){}return c};add.__clip=1}
 
   // ---------- Crew-Feed ----------
   const crew=code=>load('clipit-crew-'+code,[]);
@@ -78,7 +78,7 @@
       el.querySelector('[data-crew]').onclick=()=>openCrew(code);
       el.querySelector('[data-auto]').onchange=e=>{const m=load('clipit-autoup',{});m[code]=e.target.checked;save('clipit-autoup',m);if(e.target.checked)uploadAll(code)};
     })}
-  function uploadAll(code){const t=cloudTrips().find(x=>x.code===code);if(!t)return;try{clips.filter(c=>c.trip===t.name&&!c.cloudUrl&&!c.cloudId).forEach(c=>enqueue(c.id))}catch(e){}}
+  function uploadAll(code){const t=cloudTrips().find(x=>x.code===code);if(!t)return;try{clips.filter(c=>c.trip===t.name&&!c.film&&!c.cloudUrl&&!c.cloudId).forEach(c=>enqueue(c.id))}catch(e){}}
 
   function openCrew(code){const t=cloudTrips().find(x=>x.code===code);if(!t)return;let d=$q('#crewSheet');if(!d){d=document.createElement('dialog');d.id='crewSheet';d.className='sheet crew-sheet';document.body.appendChild(d)}
     const draw=()=>{const list=crew(code).slice().sort((a,b)=>a.date.localeCompare(b.date));let have=new Set();try{clips.forEach(c=>{if(c.cloudId)have.add(c.cloudId);if(c.cloudUrl)have.add(c.cloudUrl)})}catch(e){}
