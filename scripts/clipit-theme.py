@@ -100,7 +100,7 @@ def rebrand_html(h):
     h = replace_step(h, 4, INTRO4_HEAD)
     for a, b in [('<h2>Dein nächstes Kapitel.</h2>', '<h2>Wer filmt?</h2>'), ('<h2>Bereit zum Aufnehmen.</h2>', '<h2>Kamera bereit?</h2>'),
                  ('<h2>Gemeinsam unterwegs.</h2>', '<h2>Mit der Crew.</h2>'), ('placeholder="z. B. Brasilien 2027"', 'placeholder="z. B. Thailand ’26"'),
-                 ('<script src="onboarding.js"></script>', '<script src="onboarding.js"></script><script src="quick.js"></script><script src="vendor-blob.js"></script><script src="cloud.js"></script><script src="trips.js"></script><script src="hl.js"></script><script src="drive.js"></script>')]:
+                 ('<script src="onboarding.js"></script>', '<script src="onboarding.js"></script><script src="quick.js"></script><script src="vendor-blob.js"></script><script src="cloud.js"></script><script src="trips.js"></script><script src="hl.js"></script><script src="drive.js"></script><script src="install.js"></script><script src="motion.js"></script>')]:
         h = h.replace(a, b)
     R = [
         ('<a class="brand" href="./"><span class="brand-icon"><svg><use href="#i-camera"/></svg></span>roam</a>', '<a class="brand" href="./" aria-label="ClipIT!">' + WM + '</a>'),
@@ -197,7 +197,7 @@ def main():
         (DST / 'geo.js').write_text('/* Standort bei Aufnahme (aus der früheren groups-ui.js) */\n' + src[:src.index('let activeGroup=null')])
         g.unlink()
     sw = (DST / 'sw.js').read_text()
-    sw = re.sub(r"const CACHE='[^']+'", "const CACHE='clipit-shell-v6'", sw)
+    sw = re.sub(r"const CACHE='[^']+'", "const CACHE='clipit-shell-v7'", sw)
     if "'./quick.js'" not in sw:
         sw = sw.replace("'./onboarding.js',", "'./onboarding.js','./quick.js',")
     if "'./trips.js'" not in sw:
@@ -207,7 +207,7 @@ def main():
         sw = sw.replace("'./app.js',", "'./app.js','./geo.js',")
     if "'./hl.js'" not in sw:
         sw = sw.replace("'./trips.js',", "'./trips.js','./hl.js',")
-    for f in ['migrate.js', 'vendor-blob.js', 'cloud.js', 'drive.js']:
+    for f in ['migrate.js', 'vendor-blob.js', 'cloud.js', 'drive.js', 'install.js', 'motion.js']:
         if "'./%s'" % f not in sw:
             sw = sw.replace("'./hl.js',", "'./hl.js','./%s'," % f)
     if 'clipit-push' not in sw:
