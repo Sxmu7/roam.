@@ -11,7 +11,7 @@
     const list=all().filter(c=>c.trip===trip).sort((a,b)=>a.date.localeCompare(b.date));
     const byDay=new Map();list.forEach(c=>{const k=dayKey(c.date);if(!byDay.has(k))byDay.set(k,[]);byDay.get(k).push(c)});
     const days=[...byDay.entries()].map(([k,cs],i)=>{
-      const score=c=>(c.highlight?10:0)+(c.favorite?6:0)+(c.highlights?.length||0)*2+Math.min(c.duration||0,20)/10;
+      const score=c=>(c.highlight?10:0)+(c.favorite?6:0)+(c.highlights?.length||0)*2+Math.min(c.duration||0,20)/10+(window.clipitCloud?.score(c)||0)*3;
       let pick=cs.slice().sort((a,b)=>score(b)-score(a)).slice(0,5).sort((a,b)=>a.date.localeCompare(b.date));
       return {key:k,n:i+1,date:cs[0].date,count:cs.length,people:[...new Set(cs.map(c=>c.user))],items:pick}});
     return days}

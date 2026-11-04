@@ -457,3 +457,33 @@ body.story-open nav,body.story-open #installBanner{display:none}
 .mv-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:8px;padding:30px}.mv-empty span{font-size:40px;color:#FFC93C}.mv-empty small{color:#8f8f8a;max-width:300px;line-height:1.5}
 .leaflet-container{background:#0A0A0A;font-family:Inter,system-ui}.leaflet-control-attribution{background:#0008!important;color:#777!important;font-size:9px}.leaflet-control-attribution a{color:#999!important}
 .leaflet-container svg{width:auto;height:auto;flex-shrink:initial}.leaflet-container .leaflet-zoom-animated{max-width:none}
+/* ---- v9: Konto, Reaktionen, Crew-Film ---- */
+.acct-btn{position:relative}.acct-btn svg{width:19px;height:19px}
+.av{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#FFC93C,#FF8A3C);color:#0A0A0A;font:800 13px Inter,system-ui}
+.av.big{width:54px;height:54px;font-size:22px;flex:none;box-shadow:0 0 0 4px #FFC93C22}
+.acct-btn.on{padding:0;background:transparent}
+.acct-card{display:flex;align-items:center;gap:14px;padding:16px;border-radius:20px;background:#151515;border:1px solid #232323;margin:4px 0 12px;animation:clipEnter .45s cubic-bezier(.2,.9,.2,1)}
+.acct-card b{display:block;font-size:18px}.acct-card small{color:#8f8f8a}
+.acct-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px}.acct-stats div{padding:12px 14px;border-radius:16px;background:#121212;border:1px solid #1f1f1f}
+.acct-stats b{display:block;font-size:20px;font-weight:800;color:#FFC93C}.acct-stats span{font-size:11px;color:#8f8f8a}
+.btn.danger{color:#ff6b61}
+.pw{position:relative}.pw button{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:0;font-size:16px;opacity:.6}
+.pw-meter{height:4px;border-radius:2px;background:#222;margin-top:8px;overflow:hidden}.pw-meter i{display:block;height:100%;width:0;background:#ff6b61;transition:width .3s,background .3s}
+.pw-meter i[data-s="2"]{background:#FFC93C}.pw-meter i[data-s="3"],.pw-meter i[data-s="4"]{background:#4cd964}
+#acForm.shake{animation:shake .4s}
+@keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+#introLogin{display:block;margin:14px auto 0;color:#FFC93C;font-weight:700}
+.rx{display:flex;gap:4px;padding:6px 8px 0}
+.rx button{flex:1;display:flex;align-items:center;justify-content:center;gap:3px;height:30px;border-radius:10px;border:1px solid #262626;background:#101010;font-size:14px;transition:transform .2s cubic-bezier(.2,1.6,.4,1),background .2s}
+.rx button b{font:800 10px Inter,system-ui;color:#cfcfc8}
+.rx button.on{background:#FFC93C22;border-color:#FFC93C88}.rx button.pop{animation:rxPop .45s cubic-bezier(.2,1.6,.4,1)}
+@keyframes rxPop{40%{transform:scale(1.35) rotate(-8deg)}}
+.crew-grid figure{position:relative}.crew-grid figure.cotd{border-color:#FFC93C;box-shadow:0 0 0 1px #FFC93C,0 10px 30px #FFC93C33}
+.cotd-badge{position:absolute;z-index:2;left:8px;top:8px;padding:4px 8px;border-radius:99px;background:#FFC93C;color:#0A0A0A;font:800 10px Inter,system-ui;animation:popIn .5s cubic-bezier(.2,1.5,.4,1)}
+.crew-films{display:grid;gap:10px;margin:6px 0 14px}.crew-films figure{margin:0;border-radius:18px;overflow:hidden;background:#151515;border:1px solid #FFC93C66}
+.crew-films video{width:100%;max-height:260px;background:#000;display:block}.crew-films figcaption{display:flex;align-items:center;gap:8px;padding:10px 12px}.crew-films b{flex:1;font-size:13px}.crew-films small{font-size:11px;color:#8f8f8a}
+.hc-meter{position:relative;margin-top:10px;height:18px;border-radius:9px;background:#151515;border:1px solid #222;overflow:hidden}
+.hc-meter i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#FFC93C55,#FFC93C);transition:width .6s}
+.hc-meter span{position:relative;display:block;text-align:center;font:700 10px/18px Inter,system-ui;color:#F5F5F0}
+.fm-crew{margin:10px 0 2px!important;padding:12px;border-radius:16px;background:#FFC93C0f;border:1px solid #FFC93C40}
+#fmCloud{margin-top:8px}

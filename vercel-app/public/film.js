@@ -13,13 +13,14 @@
   let cancel=false;
 
   // ---------- Auswahl der Szenen ----------
-  function plan(trip,{mode,order}){
-    let list=allClips().filter(c=>c.trip===trip).sort((a,b)=>a.date.localeCompare(b.date));
+  function plan(trip,{mode,order},extra=[]){
+    let list=allClips().filter(c=>c.trip===trip).concat(extra).sort((a,b)=>a.date.localeCompare(b.date));
+    const sc=c=>{try{return window.clipitCloud?.score({...c,trip})||0}catch(e){return 0}};
     const short=mode==='short';
-    let segs=list.map(c=>{const d=c.duration||4;const hl=!!(c.highlight||c.favorite);
-      const len=short?Math.min(d,hl?6:3.2):d;const from=short&&!c.highlight&&d>len+1?Math.min(1,d-len):0;return {c,from,len,hl}});
+    let segs=list.map(c=>{const d=c.duration||4;const s0=sc(c),hl=!!(c.highlight||c.favorite||s0>=2);
+      const len=short?Math.min(d,hl?6:3.2):d;const from=short&&!c.highlight&&d>len+1?Math.min(1,d-len):0;return {c,from,len,hl,top:s0>=5}});
     if(short){let total=segs.reduce((s,x)=>s+x.len,0);while(total>80&&segs.some(s=>!s.hl)){const rest=segs.filter(s=>!s.hl);const drop=rest[Math.floor(rest.length/2)];segs=segs.filter(s=>s!==drop);total-=drop.len}}
-    if(order==='hl'){const hls=segs.filter(s=>s.c.highlight).slice(0,6);const opener=hls.map(s=>({...s,len:Math.min(s.len,2.4),opener:true}));segs=opener.concat(segs)}
+    if(order==='hl'){const hls=segs.filter(s=>s.c.highlight||s.top).sort((a,b)=>(b.top?1:0)-(a.top?1:0)).slice(0,6);const opener=hls.map(s=>({...s,len:Math.min(s.len,2.4),opener:true}));segs=opener.concat(segs)}
     return segs}
 
   // ---------- Musik: eigener House-Beat (122 BPM, Am–F–C–G) ----------
@@ -62,18 +63,18 @@
   function chip(g,seg,t){const a=ease(t/.4)*(1-ease((t-2.4)/.4));if(a<=0)return;g.save();g.globalAlpha=a;
     const txt=(seg.c.user||'')+' · '+new Date(seg.c.date).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});g.font='700 26px Inter,system-ui';const w=g.measureText(txt).width+44;
     const x=36,y=H-150+(1-ease(t/.4))*20;g.fillStyle='#0A0A0Acc';g.beginPath();g.roundRect(x,y,w,52,26);g.fill();g.fillStyle=R;g.beginPath();g.arc(x+22,y+26,6,0,7);g.fill();g.fillStyle=INK;g.fillText(txt,x+36,y+35);
-    if(seg.c.highlight){g.fillStyle=Y;g.beginPath();g.roundRect(x,y-62,170,46,23);g.fill();g.fillStyle='#0A0A0A';g.font='800 20px Inter,system-ui';g.fillText('★ HIGHLIGHT',x+20,y-31)}g.restore()}
+    if(seg.top){g.fillStyle=Y;g.beginPath();g.roundRect(x,y-62,250,46,23);g.fill();g.fillStyle='#0A0A0A';g.font='800 20px Inter,system-ui';g.fillText('👑 CLIP DES TAGES',x+20,y-31)}else if(seg.c.highlight){g.fillStyle=Y;g.beginPath();g.roundRect(x,y-62,170,46,23);g.fill();g.fillStyle='#0A0A0A';g.font='800 20px Inter,system-ui';g.fillText('★ HIGHLIGHT',x+20,y-31)}g.restore()}
   function grain(g){g.fillStyle='rgba(0,0,0,.18)';g.fillRect(0,0,W,90);const v=g.createLinearGradient(0,H*.7,0,H);v.addColorStop(0,'#0000');v.addColorStop(1,'#000a');g.fillStyle=v;g.fillRect(0,H*.7,W,H*.3)}
 
   // ---------- Rendern ----------
-  async function render(trip,opt,onp,preview){
-    cancel=false;const segs=plan(trip,opt);if(!segs.length)throw Error('Keine Clips in dieser Reise.');
+  async function render(trip,opt,onp,preview,extra=[]){
+    cancel=false;const segs=plan(trip,opt,extra);if(!segs.length)throw Error('Keine Clips in dieser Reise.');
     const days=[...new Set(segs.filter(s=>!s.opener).map(s=>dayKey(s.c.date)))];
     const tl=[];tl.push({k:'title',len:3.2});let lastDay=null,dn=0;
     for(const s of segs){if(!s.opener){const d=dayKey(s.c.date);if(d!==lastDay&&days.length>1){dn=days.indexOf(d)+1;tl.push({k:'day',len:1.6,label:fmtDay(s.c.date),n:dn})}lastDay=d}tl.push({k:'clip',len:s.len,s})}
     tl.push({k:'end',len:4.2});
     const total=tl.reduce((a,x)=>a+x.len,0);
-    const t0=allClips().filter(c=>c.trip===trip).map(c=>c.date).sort();
+    const t0=allClips().filter(c=>c.trip===trip).concat(extra).map(c=>c.date).sort();
     const info={name:trip,dates:t0.length?new Date(t0[0]).toLocaleDateString('de-DE',{day:'numeric',month:'short'})+' – '+new Date(t0[t0.length-1]).toLocaleDateString('de-DE',{day:'numeric',month:'short',year:'numeric'}):'',crew:[...new Set(segs.map(s=>s.c.user).filter(Boolean))].slice(0,5).join(' · ')};
     const cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d');
     const actx=new (window.AudioContext||window.webkitAudioContext)();await actx.resume();const dest=actx.createMediaStreamDestination();
@@ -116,13 +117,13 @@
   function open(trip){
     let d=$q('#filmSheet');if(!d){d=document.createElement('dialog');d.id='filmSheet';d.className='sheet film-sheet';document.body.appendChild(d)}
     const ts=tripsList();trip=trip&&ts.includes(trip)?trip:(()=>{try{return ts.includes(prefs.trip)?prefs.trip:ts[0]}catch(e){return ts[0]}})();
-    const st={mode:localStorage.getItem('clipit-film-mode')||'short',order:localStorage.getItem('clipit-film-order')||'hl',music:localStorage.getItem('clipit-film-music')||'beat',file:null};
-    const draw=()=>{const n=trip?allClips().filter(c=>c.trip===trip).length:0;const segs=trip?plan(trip,st):[];const len=segs.reduce((a,s)=>a+s.len,0)+7.4;
+    const st={crew:localStorage.getItem('clipit-film-crew')!=='0',mode:localStorage.getItem('clipit-film-mode')||'short',order:localStorage.getItem('clipit-film-order')||'hl',music:localStorage.getItem('clipit-film-music')||'beat',file:null};
+    const draw=()=>{const cm=trip?(window.clipitCloud?.crewMissing(trip)||[]):[];const n=trip?allClips().filter(c=>c.trip===trip).length:0;const segs=trip?plan(trip,st,st.crew?cm.map(c=>({...c,blob:null})):[]):[];const len=segs.reduce((a,s)=>a+s.len,0)+7.4;
       const opt=(k,v,t,sub)=>'<button type="button" data-k="'+k+'" data-v="'+v+'" class="'+(st[k]===v?'active':'')+'"><b>'+t+'</b><small>'+sub+'</small></button>';
       d.innerHTML='<div class="sheet-grip"></div><div class="sheet-head"><h2>Film erstellen</h2><button class="text-button" data-close>Schließen</button></div>'+
         (!ts.length?'<div class="note-empty"><span>🎬</span><b>Noch keine Clips.</b><small>Filme ein paar Momente – dann schneidet ClipIT! daraus euren Film.</small></div>':
         '<div class="film-hero"><div class="film-reel"><i></i><i></i><i></i></div><div><select id="fmTrip">'+ts.map(t=>'<option'+(t===trip?' selected':'')+'>'+esc(t)+'</option>').join('')+'</select><small>'+n+' Clips · ca. '+Math.round(len)+' s Film</small></div></div>'+
-        '<label>Länge</label><div class="hl-modes two-col">'+opt('mode','short','Kurz & knackig','beste Momente, ≤ 90 s')+opt('mode','full','Alles','jeder Clip komplett')+'</div>'+
+        (cm.length?'<label class="hc-toggle fm-crew"><input type="checkbox" id="fmCrew"'+(st.crew?' checked':'')+'><span></span>Crew-Film: '+cm.length+' Clips der Crew einbauen</label>':'')+'<label>Länge</label><div class="hl-modes two-col">'+opt('mode','short','Kurz & knackig','beste Momente, ≤ 90 s')+opt('mode','full','Alles','jeder Clip komplett')+'</div>'+
         '<label>Reihenfolge</label><div class="hl-modes two-col">'+opt('order','hl','Highlights zuerst','★-Montage als Opener')+opt('order','chrono','Chronologisch','wie es passiert ist')+'</div>'+
         '<label>Musik</label><div class="hl-modes">'+opt('music','beat','ClipIT! Beat','Sommer-House')+opt('music','file','Eigener Song','vom Handy')+opt('music','none','Nur O-Ton','ohne Musik')+'</div>'+
         (st.music==='file'?'<input type="file" id="fmFile" accept="audio/*" class="fm-file">'+(st.file?'<p class="field-note">♪ '+esc(st.file.name)+'</p>':''):'')+
@@ -130,6 +131,7 @@
       d.querySelector('[data-close]').onclick=()=>{cancel=true;close(d)};
       d.querySelector('#fmTrip')?.addEventListener('change',e=>{trip=e.target.value;draw()});
       d.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{st[b.dataset.k]=b.dataset.v;localStorage.setItem('clipit-film-'+b.dataset.k,b.dataset.v);draw()});
+      d.querySelector('#fmCrew')?.addEventListener('change',e=>{st.crew=e.target.checked;localStorage.setItem('clipit-film-crew',st.crew?'1':'0');draw()});
       d.querySelector('#fmFile')?.addEventListener('change',e=>{st.file=e.target.files[0]||null;draw()});
       d.querySelector('#fmGo')?.addEventListener('click',()=>run(d,trip,st));
     };
@@ -142,18 +144,21 @@
       '<div class="hl-prog"><div><i id="fmBar"></i></div><span id="fmTxt">Titelkarte …</span></div>';
     d.querySelector('#fmStop').onclick=()=>{cancel=true};
     try{
-      const r=await render(trip,st,(p,item)=>{d.querySelector('#fmBar').style.width=(p*100)+'%';d.querySelector('#fmTxt').textContent=Math.round(p*100)+'% · '+(item.k==='clip'?(item.s.c.user||'Clip')+(item.s.c.highlight?' ★':''):item.k==='day'?'Tag '+item.n:item.k==='title'?'Titelkarte':'Abspann')},d.querySelector('#fmPrev'));
+      let extra=[];const cm=st.crew?(window.clipitCloud?.crewMissing(trip)||[]):[];
+      if(cm.length){extra=await window.clipitCloud.fetchCrew(cm,(i,n)=>{d.querySelector('#fmTxt').textContent='Lade Crew-Clips '+(i+1)+' / '+n+' …';d.querySelector('#fmBar').style.width=(100*i/n*.15)+'%'})}
+      const r=await render(trip,st,(p,item)=>{d.querySelector('#fmBar').style.width=(p*100)+'%';d.querySelector('#fmTxt').textContent=Math.round(p*100)+'% · '+(item.k==='clip'?(item.s.c.user||'Clip')+(item.s.c.highlight?' ★':''):item.k==='day'?'Tag '+item.n:item.k==='title'?'Titelkarte':'Abspann')},d.querySelector('#fmPrev'),extra);
       const name='ClipIT_Film_'+trip.replace(/[^\wäöüÄÖÜß-]+/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.'+(r.blob.type.includes('mp4')?'mp4':'webm');
       let saved=null;try{saved=await add(r.blob,new Date(),r.duration,name,{trip,film:true,title:'🎬 Film · '+trip})}catch(e){}
-      done(d,r,name,!!saved);
+      done(d,r,name,!!saved,trip);
     }catch(e){d.innerHTML='<div class="sheet-grip"></div><div class="sheet-head"><h2>'+(e.message==='Abgebrochen'?'Abgebrochen':'Hat nicht geklappt')+'</h2><button class="text-button" data-close>Schließen</button></div><p class="sheet-sub">'+esc(e.message)+'</p><button class="btn wide" id="fmAgain">Nochmal</button>';
       d.querySelector('[data-close]').onclick=()=>close(d);d.querySelector('#fmAgain').onclick=()=>open(trip)}}
-  function done(d,r,name,saved){const url=URL.createObjectURL(r.blob);
+  function done(d,r,name,saved,trip){const cloud=!!window.clipitCloud?.tripOf(trip);const url=URL.createObjectURL(r.blob);
     d.innerHTML='<div class="sheet-grip"></div><div class="sheet-head"><h2>Euer Film ist fertig 🎬</h2><button class="text-button" data-close>Fertig</button></div>'+
       '<video class="film-out" src="'+url+'" controls playsinline autoplay></video><p class="sheet-sub">'+r.count+' Szenen · '+Math.round(r.duration)+' s'+(saved?' · in Dateien gespeichert':'')+'</p>'+
-      '<div class="two"><button class="btn" id="fmShare">Teilen</button><button class="btn secondary" id="fmDl">Herunterladen</button></div>';
+      '<div class="two"><button class="btn" id="fmShare">Teilen</button><button class="btn secondary" id="fmDl">Herunterladen</button></div>'+(cloud?'<button class="btn secondary wide" id="fmCloud">☁ An die Crew schicken</button>':'');
     window.clipitTrips?.confetti?.();
     d.querySelector('[data-close]').onclick=()=>{close(d);setTimeout(()=>URL.revokeObjectURL(url),400)};
+    d.querySelector('#fmCloud')?.addEventListener('click',async e=>{const b=e.target;b.disabled=true;b.textContent='Lädt hoch …';try{await window.clipitCloud.shareFilm(trip,r.blob,r.duration,name);b.textContent='✓ Die Crew wurde benachrichtigt'}catch(err){b.disabled=false;b.textContent=err.message}});
     d.querySelector('#fmDl').onclick=()=>{const a=document.createElement('a');a.href=url;a.download=name;a.click()};
     d.querySelector('#fmShare').onclick=async()=>{const f=new File([r.blob],name,{type:r.blob.type});try{if(navigator.canShare?.({files:[f]}))await navigator.share({files:[f],title:'ClipIT! Film'});else d.querySelector('#fmDl').click()}catch(e){}}}
 

@@ -22,27 +22,25 @@ Mobile Kamera-App für Reiseclips: aufnehmen, lokal behalten, in Gruppen teilen 
 
 **Sofort filmen:** `/?rec=1` öffnet die Kamera und startet direkt die Aufnahme (`vercel-app/public/quick.js`). iPhone: Kurzbefehl „URL öffnen“ mit diesem Link anlegen und auf den Action Button, ins Kontrollzentrum oder als Sperrbildschirm-Widget legen. Android: App-Shortcut „Sofort filmen“ im Manifest. Die Einrichtung erklärt die App selbst (Kamera → „Sofort filmen“ oder Einstellungen).
 
-## ClipIT! Cloud & Google Drive
+## ClipIT! Backend (alles im Gratis-Rahmen)
 
-Die Vercel-App (`vercel-app/`) hat API-Routen unter `/api` für den gemeinsamen Reise-Speicher:
+| Teil | Dienst (Free) | Wofür |
+| --- | --- | --- |
+| Datenbank | **Upstash Redis** über Vercel Marketplace (500k Befehle/Monat) | Konten, Reisen, Crew-Feed, Reaktionen, Push-Abos |
+| Video-Speicher | **Vercel Blob** Hobby (1 GB, 2.000 Uploads/Monat) | verkleinerte Crew-Kopien (≈960 px, 1,6 Mbit/s) und fertige Filme |
+| Erinnerung | **Vercel Cron** Hobby (1×/Tag, `vercel.json`) | 19 Uhr: „Heute noch kein Clip von dir 👀“ |
+| Backup in voller Qualität | **Google Drive** des Nutzers (15 GB) | optional, `GOOGLE_CLIENT_ID` |
 
-| Route | Zweck |
-| --- | --- |
-| `GET /api/config` | Zeigt der App, ob Cloud, Push und Drive eingerichtet sind |
-| `POST/GET /api/trips` | Reise anlegen / per Code laden (Code `SLUG-XXXXXXXX`, 8 zufällige Zeichen) |
-| `POST /api/upload` | Kurzlebiges Upload-Token: Videos gehen direkt in Vercel Blob |
-| `GET/POST/DELETE /api/clips` | Crew-Feed lesen, hochgeladene Clips eintragen, eigene löschen |
-| `POST /api/push` | Web-Push-Abo für „Crew hat hochgeladen“ |
+API (`vercel-app/app/api`): `config`, `auth` (registrieren/anmelden), `me` (Konto + Reisen-Sync), `trips`, `upload` (Client-Token, Speicherlimit), `clips` (Feed/Upload/Löschen), `react` (🔥😂😍👑, Clip des Tages), `push`, `cron`.
 
-Einrichtung im Vercel-Dashboard (Projekt → Settings / Storage):
+Einrichtung im Vercel-Dashboard:
+1. **Storage → Create → Blob** mit dem Projekt verbinden (`BLOB_READ_WRITE_TOKEN`).
+2. **Storage → Marketplace → Upstash (Redis) → Free** mit dem Projekt verbinden (`KV_REST_API_URL`, `KV_REST_API_TOKEN`).
+3. Optional `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY` (`npx web-push generate-vapid-keys`) für Push bei geschlossener App, `CRON_SECRET` für den Cron, `GOOGLE_CLIENT_ID` für Drive.
 
-1. **Storage → Create → Blob** anlegen und mit dem Projekt verbinden (setzt `BLOB_READ_WRITE_TOKEN`). Ohne Blob läuft ClipIT! wie bisher rein lokal.
-2. Optional Push: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` (erzeugen mit `npx web-push generate-vapid-keys`), optional `VAPID_SUBJECT`.
-3. Optional Google Drive: in der Google Cloud Console eine OAuth-Client-ID (Typ Web) anlegen, die App-Domain als „Autorisierte JavaScript-Quelle“ eintragen, Drive API aktivieren und `GOOGLE_CLIENT_ID` setzen. ClipIT! nutzt nur den Scope `drive.file` und legt Clips unter `ClipIT!/<Reise>` ab.
+Konten: Passwörter mit scrypt + Salt, Tokens HMAC-signiert (Schlüssel aus `CLIPIT_AUTH_SECRET` oder dem DB-Token abgeleitet), Sperre nach 8 Fehlversuchen für 15 Minuten. Reise-Codes `SLUG-XXXXXXXX` (8 zufällige Zeichen) sind der Zugang zur Crew-Cloud.
 
-Datenschutz: Videos liegen in Vercel Blob unter nicht erratbaren URLs; die App gibt sie nur an Geräte mit dem vollständigen Reise-Code heraus. Offline-Reisen (Code `NAME-JJMMTT`) bleiben rein lokal.
-
-Daten aus der früheren Version (ROAM) übernimmt `migrate.js` beim ersten Start automatisch (localStorage `roam-*` → `clipit-*`, IndexedDB `roam-v1` → `clipit-v1`); die alten Daten bleiben als Sicherung liegen.
+Daten aus der früheren Version (ROAM) übernimmt `migrate.js` beim ersten Start automatisch; die alten Daten bleiben als Sicherung liegen.
 
 ## Bereitstellung
 
