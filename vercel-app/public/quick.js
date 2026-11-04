@@ -12,19 +12,28 @@
 
   async function waitFor(fn,ms=6000){const t0=Date.now();while(Date.now()-t0<ms){try{if(fn())return true}catch(e){}await new Promise(r=>setTimeout(r,80))}return false}
 
+  // Fallback: großer Tipp-Bereich, falls iOS den Kamerastart ohne Fingertipp blockiert
+  function tapToRecord(){let o=document.getElementById('tapRec');if(!o){o=document.createElement('button');o.id='tapRec';o.type='button';
+      o.innerHTML='<span class="tr-ring"><i></i></span><b>Tippen zum Filmen</b><small>iOS braucht einmal deinen Fingertipp für die Kamera</small>';document.body.appendChild(o)}
+    o.classList.add('show');o.onclick=async()=>{o.classList.remove('show');try{if(!stream)await camera()}catch(e){}const r=document.getElementById('record');if(!r.classList.contains('recording'))r.click();
+      const ok=await waitFor(()=>r.classList.contains('recording'),5000);if(ok)banner('Du filmst','Nochmal auf den Auslöser tippen zum Speichern.');else banner('Kamera nicht frei','Einstellungen → Safari → Kamera & Mikrofon: Erlauben.')}}
   async function quickRecord(){
     history.replaceState(null,'',location.pathname);
     document.body.classList.add('quick-mode');
-    const intro=document.getElementById('introDialog');
-    if(intro&&intro.open){try{localStorage.setItem('clipit-onboarding-v1','done')}catch(e){}intro.close()}
+    try{localStorage.setItem('clipit-onboarding-v1','done')}catch(e){}
+    const intro=document.getElementById('introDialog');if(intro&&intro.open)intro.close();
+    document.getElementById('splash')?.remove();
     try{page('camera')}catch(e){}
     const ready=await waitFor(()=>typeof db!=='undefined'&&db);
-    if(!ready){banner('Speicher lädt noch','Tippe auf den Auslöser, um zu filmen.');return}
+    if(!ready){tapToRecord();return}
     document.getElementById('record').click();
-    const ok=await waitFor(()=>document.getElementById('record').classList.contains('recording'),8000);
-    if(ok)banner('Du filmst','Nochmal auf den Auslöser tippen zum Speichern.');
-    else banner('Kamera-Freigabe nötig','Erlaube Kamera & Mikrofon, dann auf den Auslöser tippen.');
+    const ok=await waitFor(()=>document.getElementById('record').classList.contains('recording'),3500);
+    if(ok){banner('Du filmst','Nochmal auf den Auslöser tippen zum Speichern.');if(!isStandalone)safariHint()}
+    else tapToRecord();
   }
+  // Kurzbefehle öffnen Links in Safari – Safari hat einen eigenen Speicher. Mit Konto + Cloud-Reise landen die Clips trotzdem in der App.
+  function safariHint(){if(localStorage.getItem('clipit-safari-hint'))return;localStorage.setItem('clipit-safari-hint','1');
+    setTimeout(()=>{const signed=!!localStorage.getItem('clipit-auth');window.clipitTrips?.addNote('Gefilmt in Safari',signed?'Die Clips laden automatisch in die Crew-Cloud und erscheinen in deiner ClipIT!-App.':'Melde dich hier und in der App mit demselben Konto an – dann erscheinen Safari-Clips automatisch in der App.','☁')},4000)}
 
   // ---- Einrichtungs-Dialog für Action Button & Widgets ----
   function setupDialog(){
@@ -40,13 +49,16 @@
         <li><b>3</b><span><strong>Widget:</strong> Sperrbildschirm oder Kontrollzentrum bearbeiten → <strong>Kurzbefehle</strong> hinzufügen → „ClipIT! filmen“.</span></li>
         <li><b>4</b><span>Einmal testen und Kamera & Mikrofon dauerhaft erlauben, damit es beim nächsten Mal ohne Rückfrage startet.</span></li>
       </ol>
-      <p class="field-note">Wichtig auf dem iPhone: Füge ClipIT! zuerst über Safari zum Home-Bildschirm hinzu und nutze ClipIT! dann immer über diese App. Öffnet sich der Link stattdessen als Safari-Tab, speichert Safari die Clips getrennt von der Home-Bildschirm-App. Exportiere sie dann als ClipIT!-ZIP und importiere sie in der App.</p>
+      <div class="qd-note"><b>Gut zu wissen (iPhone):</b> Kurzbefehle öffnen Links immer in <strong>Safari</strong>, nicht in der Home-Bildschirm-App – das erlaubt Apple nicht anders. Damit die Clips trotzdem in deiner App landen: in Safari <strong>und</strong> in der App mit demselben <strong>Konto</strong> anmelden und eine Cloud-Reise nutzen. Dann wandern Safari-Clips automatisch rüber.</div>
+      <div class="qd-note alt"><b>Schnellste Alternative:</b> Action Button auf <strong>Kamera → Video</strong> stellen, filmen wie gewohnt und die Clips später in ClipIT! unter <strong>Import</strong> auswählen – Datum und Uhrzeit bleiben erhalten.</div>
+      <button class="btn secondary wide" id="qdLogin">Konto in diesem Browser anmelden</button>
       <button class="btn secondary wide" id="qdTest">Jetzt testen</button>`;
       document.body.appendChild(d);
       d.querySelector('[data-close]').onclick=()=>d.close();
       d.querySelector('#qdUrl').textContent=QUICK_URL;
       d.querySelector('#qdCopy').onclick=async()=>{try{await navigator.clipboard.writeText(QUICK_URL);banner('Link kopiert','Jetzt in Kurzbefehle einfügen.')}catch(e){prompt('Link kopieren:',QUICK_URL)}};
       d.querySelector('#qdTest').onclick=()=>{d.close();quickRecord()};
+      d.querySelector('#qdLogin').onclick=()=>{d.close();window.clipitAccount?.open(localStorage.getItem('clipit-auth')?null:'login')};
     }
     d.showModal();
   }
@@ -63,4 +75,5 @@
 
   addEntryPoints();
   if(quick)setTimeout(quickRecord,150);
+  window.clipitQuickRecord=quickRecord;
 })();

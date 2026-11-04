@@ -100,7 +100,7 @@ def rebrand_html(h):
     h = replace_step(h, 4, INTRO4_HEAD)
     for a, b in [('<h2>Dein nächstes Kapitel.</h2>', '<h2>Wer filmt?</h2>'), ('<h2>Bereit zum Aufnehmen.</h2>', '<h2>Kamera bereit?</h2>'),
                  ('<h2>Gemeinsam unterwegs.</h2>', '<h2>Mit der Crew.</h2>'), ('placeholder="z. B. Brasilien 2027"', 'placeholder="z. B. Thailand ’26"'),
-                 ('<script src="onboarding.js"></script>', '<script src="onboarding.js"></script><script src="quick.js"></script><script src="vendor-blob.js"></script><script src="cloud.js"></script><script src="account.js"></script><script src="trips.js"></script><script src="hl.js"></script><script src="drive.js"></script><script src="install.js"></script><script src="film.js"></script><script src="story.js"></script><script src="map.js"></script><script src="motion.js"></script>')]:
+                 ('<script src="onboarding.js"></script>', '<script src="onboarding.js"></script><script src="quick.js"></script><script src="vendor-blob.js"></script><script src="cloud.js"></script><script src="account.js"></script><script src="trips.js"></script><script src="hl.js"></script><script src="drive.js"></script><script src="install.js"></script><script src="film.js"></script><script src="story.js"></script><script src="map.js"></script><script src="splash.js"></script><script src="motion.js"></script>')]:
         h = h.replace(a, b)
     R = [
         ('<a class="brand" href="./"><span class="brand-icon"><svg><use href="#i-camera"/></svg></span>roam</a>', '<a class="brand" href="./" aria-label="ClipIT!">' + WM + '</a>'),
@@ -123,7 +123,15 @@ def rebrand_html(h):
     for a, b in R:
         h = h.replace(a, b)
     h = one_app(h)
+    h = h.replace('<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">',
+                  '<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">'
+                  '<script>if(/[?&]rec=1/.test(location.search)||location.hash==="#rec")document.documentElement.classList.add("no-splash")</script>')
+    if 'id="splash"' not in h:
+        h = h.replace('<body data-page="camera">', '<body data-page="camera">' + SPLASH, 1)
     return h
+
+SPLASH = ('<div id="splash" aria-hidden="true"><div class="sp-glow"></div><div class="sp-mark"><span class="sp-c">Clip</span><span class="sp-it">IT</span><span class="sp-bang"><i></i><b></b></span></div>'
+          '<div class="sp-bar"><i></i></div><p class="sp-tag">Alle filmen. <span>Ein Film.</span></p><div class="sp-slot"></div><small class="sp-by">by SXMU</small></div>')
 
 TRIPS_TAB = ('<button id="tripsTab" data-tab="trips"><svg viewBox="0 0 24 24"><path d="M3 17l7-4V6a2 2 0 0 1 4 0v7l7 4v2l-7-2v3l2 1.5V23l-4-1-4 1v-1.5L10 20v-3l-7 2z"/></svg>'
              '<span>Reisen</span></button>')
@@ -198,7 +206,7 @@ def main():
         (DST / 'geo.js').write_text('/* Standort bei Aufnahme (aus der früheren groups-ui.js) */\n' + src[:src.index('let activeGroup=null')])
         g.unlink()
     sw = (DST / 'sw.js').read_text()
-    sw = re.sub(r"const CACHE='[^']+'", "const CACHE='clipit-shell-v9'", sw)
+    sw = re.sub(r"const CACHE='[^']+'", "const CACHE='clipit-shell-v10'", sw)
     if "'./quick.js'" not in sw:
         sw = sw.replace("'./onboarding.js',", "'./onboarding.js','./quick.js',")
     if "'./trips.js'" not in sw:
@@ -208,7 +216,7 @@ def main():
         sw = sw.replace("'./app.js',", "'./app.js','./geo.js',")
     if "'./hl.js'" not in sw:
         sw = sw.replace("'./trips.js',", "'./trips.js','./hl.js',")
-    for f in ['migrate.js', 'vendor-blob.js', 'cloud.js', 'drive.js', 'install.js', 'motion.js', 'film.js', 'story.js', 'map.js', 'account.js']:
+    for f in ['migrate.js', 'vendor-blob.js', 'cloud.js', 'drive.js', 'install.js', 'motion.js', 'film.js', 'story.js', 'map.js', 'account.js', 'splash.js']:
         if "'./%s'" % f not in sw:
             sw = sw.replace("'./hl.js',", "'./hl.js','./%s'," % f)
     if 'clipit-push' not in sw:

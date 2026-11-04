@@ -97,6 +97,7 @@
             const body=film?'🎬 '+film.user+' hat den Film fertig – ansehen!':who.join(', ')+' '+(theirs.length===1?(hl?'hat ein ★ Highlight':'hat einen Clip'):'haben '+theirs.length+' Clips')+' hochgeladen';
             T()?.addNote(t.name,body,film?'🎬':'☁');if(document.hidden)T()?.systemNotify(t.name,body)}
         }
+        await importOwn(t);
         reminder(t);
       }catch(e){console.warn('poll',e)}
     }
@@ -150,6 +151,11 @@
       await add(blob,new Date(c.date),c.duration,c.name,{user:c.user,trip:t.name,highlight:!!c.highlight,cloudUrl:c.url,cloudId:c.id})}
     catch(e){const m=$q('#crewMsg');if(m)m.textContent=e.message}}
 
+  /** Eigene Clips von anderen Geräten desselben Kontos (z. B. Safari über den Action Button) automatisch übernehmen */
+  async function importOwn(t){if(!localStorage.getItem('clipit-auth')||!myHash)return;let have=new Set();try{clips.concat(trashed||[]).forEach(c=>{have.add(c.id);if(c.cloudId)have.add(c.cloudId)})}catch(e){return}
+    const mine=crew(t.code).filter(c=>c.by===myHash&&!c.film&&!have.has(c.id));let n=0;
+    for(const c of mine.slice(0,10)){try{const r=await fetch(c.url);if(!r.ok)continue;await add(await r.blob(),new Date(c.date),c.duration,c.name,{user:c.user,trip:t.name,highlight:!!c.highlight,cloudUrl:c.url,cloudId:c.id});n++}catch(e){}}
+    if(n)T()?.addNote(t.name,n+' Clip'+(n>1?'s':'')+' von deinem anderen Gerät übernommen','↓')}
   /** Crew-Clips einer Reise, die noch nicht lokal liegen (für den Crew-Film) */
   function crewMissing(tripName){const t=tripOf(tripName);if(!t)return [];let have=new Set();try{clips.forEach(c=>{if(c.cloudId)have.add(c.cloudId);have.add(c.id)})}catch(e){}
     return crew(t.code).filter(c=>!c.film&&!have.has(c.id)&&c.by!==myHash)}
