@@ -19,8 +19,8 @@ $('#sendGroupClips').onclick=async()=>{let ids=[...$('#groupUploadList').querySe
 
 loadGroups=async function(){
  $('#createGroupForm').style.display='none';$('#joinGroupForm').style.display='none';$('#activeGroup').classList.add('hidden');
- groupMessage('Deine Gruppenreisen laufen in der bestehenden geschützten ROAM-App.');
+ groupMessage('Deine Gruppenreisen laufen in der bestehenden geschützten ClipIT!-App.');
  let box=node('div','shared-body');box.append(node('h3','','Gemeinsam unterwegs'),node('p','','Reisegruppen erstellen, mit einem Code beitreten und Originalclips teilen. Öffne die geschützte Gruppen-App und melde dich dort an.'));
- let a=node('a','btn secondary','Gruppen-App öffnen ↗');a.href='https://roam-samu-clips.darkhen256.chatgpt.site/?groups=1';box.append(a,node('p','storage-note','Lokale Clips gehören zur jeweiligen App-Adresse. Exportiere ein ROAM-ZIP unter Dateien und importiere es in der Gruppen-App, wenn du diese Clips dort teilen möchtest.'));$('#groupList').replaceChildren(box)
+ let a=node('a','btn secondary','Gruppen-App öffnen ↗');a.href='https://roam-samu-clips.darkhen256.chatgpt.site/?groups=1';box.append(a,node('p','storage-note','Lokale Clips gehören zur jeweiligen App-Adresse. Exportiere ein ClipIT!-ZIP unter Dateien und importiere es in der Gruppen-App, wenn du diese Clips dort teilen möchtest.'));$('#groupList').replaceChildren(box)
 };
 if(new URLSearchParams(location.search).get('groups')==='1')page('groups');
